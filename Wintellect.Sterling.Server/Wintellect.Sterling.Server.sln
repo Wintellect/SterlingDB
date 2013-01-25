@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wintellect.Sterling.Core", "..\Wintellect.Sterling.Core\Wintellect.Sterling.Core.csproj", "{7B8F46DA-A437-45C4-B54A-87B418D5701F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wintellect.Sterling.Server", "Wintellect.Sterling.Server.csproj", "{549440CA-6C2C-437D-BF6A-B86EB2335551}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wintellect.Sterling.Server.Test", "..\Wintellect.Sterling.Server.Test\Wintellect.Sterling.Server.Test.csproj", "{64E0478A-7E7D-4791-8A9B-35FD0E5C6744}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7B8F46DA-A437-45C4-B54A-87B418D5701F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B8F46DA-A437-45C4-B54A-87B418D5701F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B8F46DA-A437-45C4-B54A-87B418D5701F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B8F46DA-A437-45C4-B54A-87B418D5701F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{549440CA-6C2C-437D-BF6A-B86EB2335551}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{549440CA-6C2C-437D-BF6A-B86EB2335551}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{549440CA-6C2C-437D-BF6A-B86EB2335551}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{549440CA-6C2C-437D-BF6A-B86EB2335551}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64E0478A-7E7D-4791-8A9B-35FD0E5C6744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64E0478A-7E7D-4791-8A9B-35FD0E5C6744}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64E0478A-7E7D-4791-8A9B-35FD0E5C6744}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64E0478A-7E7D-4791-8A9B-35FD0E5C6744}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

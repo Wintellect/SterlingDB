@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{64E0478A-7E7D-4791-8A9B-35FD0E5C6744}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Wintellect.Sterling.Test</RootNamespace>
+    <AssemblyName>Wintellect.Sterling.Server.Test</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
+    <IsCodedUITest>False</IsCodedUITest>
+    <TestProjectType>UnitTest</TestProjectType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <Choose>
+    <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
+      <ItemGroup>
+        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+  <ItemGroup>
+    <Compile Include="Database\TestPendingOperation.cs" />
+    <Compile Include="Database\TestActivation.cs" />
+    <Compile Include="Database\TestAggregateList.cs" />
+    <Compile Include="Database\TestArrays.cs" />
+    <Compile Include="Database\TestAsync.cs" />
+    <Compile Include="Database\TestBackupRestore.cs" />
+    <Compile Include="Database\TestByteStreamInterceptor.cs" />
+    <Compile Include="Database\TestCycle.cs" />
+    <Compile Include="Database\TestDelete.cs" />
+    <Compile Include="Database\TestDictionary.cs" />
+    <Compile Include="Database\TestDirtyFlag.cs" />
+    <Compile Include="Database\TestEnum.cs" />
+    <Compile Include="Database\TestField.cs" />
+    <Compile Include="Database\TestIndexQuery.cs" />
+    <Compile Include="Database\TestInterfaceProperty.cs" />
+    <Compile Include="Database\TestLists.cs" />
+    <Compile Include="Database\TestNestedInstance.cs" />
+    <Compile Include="Database\TestNullable.cs" />
+    <Compile Include="Database\TestPurge.cs" />
+    <Compile Include="Database\TestQuery.cs" />
+    <Compile Include="Database\TestRegistration.cs" />
+    <Compile Include="Database\TestSaveAndLoad.cs" />
+    <Compile Include="Database\TestSerializers.cs" />
+    <Compile Include="Database\TestTableDefinition.cs" />
+    <Compile Include="Database\TestTriggers.cs" />
+    <Compile Include="Database\TestTruncate.cs" />
+    <Compile Include="Database\TestWriteableBitmap.cs" />
+    <Compile Include="EngineFactory.cs" />
+    <Compile Include="Helpers\BadDatabaseInstance.cs" />
+    <Compile Include="Helpers\DupDatabaseInstance.cs" />
+    <Compile Include="Helpers\ExceptionHelper.cs" />
+    <Compile Include="Helpers\TestAggregateListModel.cs" />
+    <Compile Include="Helpers\TestAggregateModel.cs" />
+    <Compile Include="Helpers\TestBaseClassModel.cs" />
+    <Compile Include="Helpers\TestChangingTypeFirstVersionClass.cs" />
+    <Compile Include="Helpers\TestChangingTypeSecondVersionClass.cs" />
+    <Compile Include="Helpers\TestClassWithArray.cs" />
+    <Compile Include="Helpers\TestClassWithDictionary.cs" />
+    <Compile Include="Helpers\TestClassWithStruct.cs" />
+    <Compile Include="Helpers\TestCompositeClass.cs" />
+    <Compile Include="Helpers\TestCompositeKeyClass.cs" />
+    <Compile Include="Helpers\TestCompositeSerializer.cs" />
+    <Compile Include="Helpers\TestDatabaseInstance.cs" />
+    <Compile Include="Helpers\TestDatabaseInstanceComposite.cs" />
+    <Compile Include="Helpers\TestDatabaseInterfaceInstance.cs" />
+    <Compile Include="Helpers\TestDerivedClassAModel.cs" />
+    <Compile Include="Helpers\TestDerivedClassBModel.cs" />
+    <Compile Include="Helpers\TestForeignModel.cs" />
+    <Compile Include="Helpers\TestListModel.cs" />
+    <Compile Include="Helpers\TestModel.cs" />
+    <Compile Include="Helpers\TestModelAsList.cs" />
+    <Compile Include="Helpers\TestSerializer.cs" />
+    <Compile Include="Indexes\TestSingleIndex.cs" />
+    <Compile Include="Keys\TestCompositeKey.cs" />
+    <Compile Include="Keys\TestCompositeKeyWithKeyClass.cs" />
+    <Compile Include="Keys\TestKeyCollection.cs" />
+    <Compile Include="Keys\TestTableKey.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serializer\TestAggregateSerializer.cs" />
+    <Compile Include="Serializer\TestCustomSerializer.cs" />
+    <Compile Include="Serializer\TestDefaultSerializer.cs" />
+    <Compile Include="Serializer\TestExtendedSerializer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.Core.csproj">
+      <Project>{7b8f46da-a437-45c4-b54a-87b418d5701f}</Project>
+      <Name>Wintellect.Sterling.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Wintellect.Sterling.Server\Wintellect.Sterling.Server.csproj">
+      <Project>{549440ca-6c2c-437d-bf6a-b86eb2335551}</Project>
+      <Name>Wintellect.Sterling.Server</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
+      <ItemGroup>
+        <Reference Include="Microsoft.VisualStudio.QualityTools.CodedUITestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Extension, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Microsoft.VisualStudio.TestTools.UITesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,375 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{185A3ECC-06A4-4BA1-A634-A1E681C6E66D}</ProjectGuid>
+    <ProjectTypeGuids>{C089C8C0-30E0-4E22-80C0-CE093F111A43};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Wintellect.Sterling.Test</RootNamespace>
+    <AssemblyName>Wintellect.Sterling.WP8.Test</AssemblyName>
+    <TargetFrameworkIdentifier>WindowsPhone</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v8.0</TargetFrameworkVersion>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <SilverlightApplication>true</SilverlightApplication>
+    <SupportedCultures>
+    </SupportedCultures>
+    <XapOutputs>true</XapOutputs>
+    <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
+    <XapFilename>Wintellect.Sterling.WP8.Test_$(Configuration)_$(Platform).xap</XapFilename>
+    <SilverlightManifestTemplate>Properties\AppManifest.xml</SilverlightManifestTemplate>
+    <SilverlightAppEntry>Wintellect.Sterling.Test.App</SilverlightAppEntry>
+    <ValidateXaml>true</ValidateXaml>
+    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\x86\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\x86\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|ARM' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\ARM\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|ARM' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\ARM\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestActivation.cs">
+      <Link>Database\TestActivation.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestAggregateList.cs">
+      <Link>Database\TestAggregateList.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestArrays.cs">
+      <Link>Database\TestArrays.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestAsync.cs">
+      <Link>Database\TestAsync.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestBackupRestore.cs">
+      <Link>Database\TestBackupRestore.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestByteStreamInterceptor.cs">
+      <Link>Database\TestByteStreamInterceptor.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestCycle.cs">
+      <Link>Database\TestCycle.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestDelete.cs">
+      <Link>Database\TestDelete.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestDictionary.cs">
+      <Link>Database\TestDictionary.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestDirtyFlag.cs">
+      <Link>Database\TestDirtyFlag.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestEnum.cs">
+      <Link>Database\TestEnum.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestField.cs">
+      <Link>Database\TestField.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestIndexQuery.cs">
+      <Link>Database\TestIndexQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestInterfaceProperty.cs">
+      <Link>Database\TestInterfaceProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestLists.cs">
+      <Link>Database\TestLists.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestNestedInstance.cs">
+      <Link>Database\TestNestedInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestNullable.cs">
+      <Link>Database\TestNullable.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestPendingOperation.cs">
+      <Link>Database\TestPendingOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestPurge.cs">
+      <Link>Database\TestPurge.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestQuery.cs">
+      <Link>Database\TestQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestRegistration.cs">
+      <Link>Database\TestRegistration.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestSaveAndLoad.cs">
+      <Link>Database\TestSaveAndLoad.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestSerializers.cs">
+      <Link>Database\TestSerializers.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestTableDefinition.cs">
+      <Link>Database\TestTableDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestTriggers.cs">
+      <Link>Database\TestTriggers.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestTruncate.cs">
+      <Link>Database\TestTruncate.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestWriteableBitmap.cs">
+      <Link>Database\TestWriteableBitmap.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\BadDatabaseInstance.cs">
+      <Link>Helpers\BadDatabaseInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\DupDatabaseInstance.cs">
+      <Link>Helpers\DupDatabaseInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\ExceptionHelper.cs">
+      <Link>Helpers\ExceptionHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestAggregateListModel.cs">
+      <Link>Helpers\TestAggregateListModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestAggregateModel.cs">
+      <Link>Helpers\TestAggregateModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestBaseClassModel.cs">
+      <Link>Helpers\TestBaseClassModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestChangingTypeFirstVersionClass.cs">
+      <Link>Helpers\TestChangingTypeFirstVersionClass.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestChangingTypeSecondVersionClass.cs">
+      <Link>Helpers\TestChangingTypeSecondVersionClass.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestClassWithArray.cs">
+      <Link>Helpers\TestClassWithArray.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestClassWithDictionary.cs">
+      <Link>Helpers\TestClassWithDictionary.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestClassWithStruct.cs">
+      <Link>Helpers\TestClassWithStruct.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestCompositeClass.cs">
+      <Link>Helpers\TestCompositeClass.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestCompositeKeyClass.cs">
+      <Link>Helpers\TestCompositeKeyClass.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestCompositeSerializer.cs">
+      <Link>Helpers\TestCompositeSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestDatabaseInstance.cs">
+      <Link>Helpers\TestDatabaseInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestDatabaseInstanceComposite.cs">
+      <Link>Helpers\TestDatabaseInstanceComposite.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestDatabaseInterfaceInstance.cs">
+      <Link>Helpers\TestDatabaseInterfaceInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestDerivedClassAModel.cs">
+      <Link>Helpers\TestDerivedClassAModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestDerivedClassBModel.cs">
+      <Link>Helpers\TestDerivedClassBModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestForeignModel.cs">
+      <Link>Helpers\TestForeignModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestListModel.cs">
+      <Link>Helpers\TestListModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestModel.cs">
+      <Link>Helpers\TestModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestModelAsList.cs">
+      <Link>Helpers\TestModelAsList.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Helpers\TestSerializer.cs">
+      <Link>Helpers\TestSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Indexes\TestSingleIndex.cs">
+      <Link>Indexes\TestSingleIndex.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Keys\TestCompositeKey.cs">
+      <Link>Keys\TestCompositeKey.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Keys\TestCompositeKeyWithKeyClass.cs">
+      <Link>Keys\TestCompositeKeyWithKeyClass.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Keys\TestKeyCollection.cs">
+      <Link>Keys\TestKeyCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Keys\TestTableKey.cs">
+      <Link>Keys\TestTableKey.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Serializer\TestAggregateSerializer.cs">
+      <Link>Serializer\TestAggregateSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Serializer\TestCustomSerializer.cs">
+      <Link>Serializer\TestCustomSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Serializer\TestDefaultSerializer.cs">
+      <Link>Serializer\TestDefaultSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\Serializer\TestExtendedSerializer.cs">
+      <Link>Serializer\TestExtendedSerializer.cs</Link>
+    </Compile>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="EngineFactory.cs" />
+    <Compile Include="LocalizedStrings.cs" />
+    <Compile Include="MainPage.xaml.cs">
+      <DependentUpon>MainPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resources\AppResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AppResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
+    <Page Include="MainPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+    <None Include="Properties\AppManifest.xml" />
+    <None Include="Properties\WMAppManifest.xml">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\AlignmentGrid.png" />
+    <Content Include="Assets\ApplicationIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Tiles\FlipCycleTileLarge.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Tiles\FlipCycleTileMedium.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Tiles\FlipCycleTileSmall.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Tiles\IconicTileMediumLarge.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Tiles\IconicTileSmall.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="README_FIRST.txt" />
+    <Content Include="Toolkit.Content\ApplicationBar.Cancel.png" />
+    <Content Include="Toolkit.Content\ApplicationBar.Check.png" />
+    <Content Include="Toolkit.Content\ApplicationBar.Delete.png" />
+    <Content Include="Toolkit.Content\ApplicationBar.Email.png" />
+    <Content Include="Toolkit.Content\ApplicationBar.Play.png" />
+    <Content Include="Toolkit.Content\ApplicationBar.Save.png" />
+    <Content Include="Toolkit.Content\ApplicationBar.Select.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\AppResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>AppResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.Core.csproj">
+      <Project>{7B8F46DA-A437-45C4-B54A-87B418D5701F}</Project>
+      <Name>Wintellect.Sterling.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Wintellect.Sterling.WP8\Wintellect.Sterling.WP8.csproj">
+      <Project>{C673A4A9-88FA-410D-B3FD-F5B7B62EB50E}</Project>
+      <Name>Wintellect.Sterling.WP8</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Phone.Controls.Toolkit, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b772ad94eb9ca604, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\WPtoolkit.4.2012.10.30\lib\wp8\Microsoft.Phone.Controls.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Phone.Toolkit.Testing, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b772ad94eb9ca604, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\WPToolkitTestFx.4.2012.11.14\lib\wp8\Microsoft.Phone.Toolkit.Testing.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTesting.Phone, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b772ad94eb9ca604, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\WPToolkitTestFx.4.2012.11.14\lib\wp8\Microsoft.VisualStudio.QualityTools.UnitTesting.Phone.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).$(TargetFrameworkVersion).Overrides.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ProjectExtensions />
+</Project>

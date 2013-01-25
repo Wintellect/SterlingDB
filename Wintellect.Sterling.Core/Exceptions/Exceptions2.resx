@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="BaseDatabaseInstance_Delete_Delete_failed_for_type" xml:space="preserve">
+    <value>Delete failed for type {0}: delete suppressed by trigger.</value>
+  </data>
+  <data name="BaseDatabaseInstance_RegisterInterceptor_Interceptor_not_null" xml:space="preserve">
+    <value>Interceptor can't be null</value>
+  </data>
+  <data name="BaseDatabaseInstance_Save_Save_suppressed_by_trigger" xml:space="preserve">
+    <value>Save suppressed by trigger.</value>
+  </data>
+  <data name="BaseDatabaseInstance_Truncate_Cannot_truncate_when_background_operations" xml:space="preserve">
+    <value>Cannot truncate when background operations are still running.</value>
+  </data>
+  <data name="SterlingActivationException" xml:space="preserve">
+    <value>The operation {0} is not allowed. A Sterling engine is already active for this application. You must dispose the engine before activating a new one.</value>
+  </data>
+  <data name="SterlingDatabaseNotFoundException" xml:space="preserve">
+    <value>A definition for database with name {0} was not found.</value>
+  </data>
+  <data name="SterlingDuplicateDatabaseException" xml:space="preserve">
+    <value>A database of type {0} has already been created. Only one database may exist.</value>
+  </data>
+  <data name="SterlingDuplicateIndexException" xml:space="preserve">
+    <value>An index with the name {0} for type {1} already exists in Sterling database {1}.</value>
+  </data>
+  <data name="SterlingDuplicateTypeException" xml:space="preserve">
+    <value>A duplicate definition for type {0} already exists in Sterling database {1}.</value>
+  </data>
+  <data name="SterlingIndexNotFoundException" xml:space="preserve">
+    <value>An index with the name {0} was not found for type {1}.</value>
+  </data>
+  <data name="SterlingIsolatedStorageException" xml:space="preserve">
+    <value>There was an issue accessing isolated storage: {0}. Check the inner exception for details.</value>
+  </data>
+  <data name="SterlingLoggerNotFoundException" xml:space="preserve">
+    <value>An attempt to unregister the logger with id {0} failed. The logger was not found.</value>
+  </data>
+  <data name="SterlingNoTableDefinitionsException" xml:space="preserve">
+    <value>No table defintions were provided for the database. At least one table definition is required.</value>
+  </data>
+  <data name="SterlingNotReadyException" xml:space="preserve">
+    <value>Operation failed. Sterling is not activated. Call ISterlingDatabase.Activate() to prepare the database for use.</value>
+  </data>
+  <data name="SterlingNullException" xml:space="preserve">
+    <value>Sterling does not support serialization of NULL properties (property {0} on type {1}).</value>
+  </data>
+  <data name="SterlingSerializerException" xml:space="preserve">
+    <value>Serialization/deserialization failed because the serializer {0} could not process the type {1} requested.</value>
+  </data>
+  <data name="SterlingTableNotFoundException" xml:space="preserve">
+    <value>A definition for type {0} was not found in Sterling database {1}.</value>
+  </data>
+  <data name="SterlingTriggerException_SterlingTriggerException_Sterling_trigger_exception" xml:space="preserve">
+    <value>Sterling trigger exception occurred for trigger {0}: {1}</value>
+  </data>
+</root>
