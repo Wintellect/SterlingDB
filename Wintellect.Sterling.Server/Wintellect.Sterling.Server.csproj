@@ -51,6 +51,11 @@
     <Compile Include="..\Wintellect.Sterling.Core\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="FileSystem\FileSystemDriver.cs" />
+    <Compile Include="FileSystem\FileSystemHelper.cs" />
+    <Compile Include="FileSystem\PathLock.cs" />
+    <Compile Include="FileSystem\PathProvider.cs" />
+    <Compile Include="FileSystem\SterlingFileSystemException.cs" />
     <Compile Include="PlatformAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
