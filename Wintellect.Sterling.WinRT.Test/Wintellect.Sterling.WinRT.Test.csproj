@@ -14,7 +14,8 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{BC8A1FFA-BEE3-4634-8014-F334798102B3};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <PackageCertificateKeyFile>Wintellect.Sterling.WinRT.Test_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>Wintellect.Sterling.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>B2FA21EE1EADA8BF2452CD7027A71EFF3E0C7EE5</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -109,6 +110,12 @@
     <SDKReference Include="TestPlatform, Version=11.0" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Wintellect.Sterling.Core\CommonAssemblyInfo.cs">
+      <Link>CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Core\VersionInfo.cs">
+      <Link>VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestActivation.cs">
       <Link>Database\TestActivation.cs</Link>
     </Compile>
@@ -293,7 +300,10 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="Wintellect.Sterling.WinRT.Test_TemporaryKey.pfx" />
+    <None Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.snk">
+      <Link>Wintellect.Sterling.snk</Link>
+    </None>
+    <None Include="Wintellect.Sterling.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Images\UnitTestLogo.png">
@@ -324,7 +334,10 @@
     <VisualStudioVersion>11.0</VisualStudioVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\Wintellect.Sterling.Core\Wintellect.Sterling.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

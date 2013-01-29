@@ -34,6 +34,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\Wintellect.Sterling.Core\Wintellect.Sterling.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -50,6 +56,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="..\Wintellect.Sterling.Core\CommonAssemblyInfo.cs">
+      <Link>CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\Wintellect.Sterling.Core\VersionInfo.cs">
+      <Link>VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="Database\TestActivation.cs" />
     <Compile Include="Database\TestAggregateList.cs" />
     <Compile Include="Database\TestArrays.cs" />
@@ -121,6 +133,11 @@
       <Project>{549440ca-6c2c-437d-bf6a-b86eb2335551}</Project>
       <Name>Wintellect.Sterling.Server</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.snk">
+      <Link>Wintellect.Sterling.snk</Link>
+    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

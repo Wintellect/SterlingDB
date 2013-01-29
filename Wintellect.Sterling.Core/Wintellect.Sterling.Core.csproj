@@ -32,7 +32,14 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Wintellect.Sterling.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CommonAssemblyInfo.cs" />
     <Compile Include="Database\BaseDatabaseInstance.cs" />
     <Compile Include="Database\BaseDriver.cs" />
     <Compile Include="Database\BaseSterlingByteInterceptor.cs" />
@@ -101,12 +108,16 @@
     <Compile Include="SterlingEngine.cs" />
     <Compile Include="SterlingFactory.cs" />
     <Compile Include="SterlingLogLevel.cs" />
+    <Compile Include="VersionInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Exceptions\Exceptions.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Exceptions.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Wintellect.Sterling.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
