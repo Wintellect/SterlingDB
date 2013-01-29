@@ -62,6 +62,15 @@ namespace Wintellect.Sterling.Core.Exceptions {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot purge when background operations are still running..
+        /// </summary>
+        internal static string BaseDatabaseInstance_Cannot_purge_when_background_operations {
+            get {
+                return ResourceManager.GetString("BaseDatabaseInstance_Cannot_purge_when_background_operations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Delete failed for type {0}: delete suppressed by trigger..
         /// </summary>
         internal static string BaseDatabaseInstance_Delete_Delete_failed_for_type {

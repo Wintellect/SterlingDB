@@ -49,17 +49,17 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestObjectFieldDatabase>();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestData()
         {
             var testNull = new TestObjectField {Key = 1, Data = "data"};
 
-            _databaseInstance.Save(testNull);
+            _databaseInstance.SaveAsync( testNull ).Wait();
 
-            var loadedTestNull = _databaseInstance.Load<TestObjectField>(1);
+            var loadedTestNull = _databaseInstance.LoadAsync<TestObjectField>( 1 ).Result;
 
             // The values in the deserialized class should be populated.
             Assert.IsNotNull(loadedTestNull);
@@ -70,7 +70,7 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }

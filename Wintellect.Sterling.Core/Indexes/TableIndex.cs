@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Wintellect.Sterling.Core.Indexes
 {
@@ -12,6 +13,8 @@ namespace Wintellect.Sterling.Core.Indexes
     {
         private readonly Func<TKey, T> _getter;
         private readonly int _hashCode;
+
+        private Lazy<T> _lazyValue;
 
         public TKey Key { get; private set; }
 
@@ -27,26 +30,42 @@ namespace Wintellect.Sterling.Core.Indexes
         /// <param name="index">The index value</param>
         /// <param name="key">The associated key with the index</param>
         /// <param name="getter">Getter method for loading an instance</param>
-        public TableIndex(TIndex index, TKey key, Func<TKey,T> getter)
+        internal TableIndex(TIndex index, TKey key, Func<TKey,T> getter)
         {
             Index = index;
             Key = key;
             _hashCode = key.GetHashCode();
             _getter = getter;
-            LazyValue = new Lazy<T>(() => _getter(Key));
+            _lazyValue = new Lazy<T>(() => _getter(Key));
         }
 
-        /// <summary>
-        ///     Entity the key points to
-        /// </summary>
-        public Lazy<T> LazyValue { get; private set; }
+        public Task<T> Value
+        {
+            get
+            {
+                lock ( _getter )
+                {
+                    if ( _lazyValue.IsValueCreated )
+                    {
+                        return Task<T>.FromResult( _lazyValue.Value );
+                    }
+                    else
+                    {
+                        return Task<T>.Factory.StartNew( () => _lazyValue.Value );
+                    }
+                }
+            }
+        }
 
         /// <summary>
         ///     Refresh the lazy value
         /// </summary>
         public void Refresh()
         {
-            LazyValue = new Lazy<T>(() => _getter(Key));
+            lock ( _getter )
+            {
+                _lazyValue = new Lazy<T>( () => _getter( Key ) );
+            }
         }
 
         /// <summary>

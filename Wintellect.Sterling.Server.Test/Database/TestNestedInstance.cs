@@ -86,10 +86,10 @@ namespace Wintellect.Sterling.Test.Database
             _database = null;
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestAddBill()
         {
-            _database.Purge();
+            _database.PurgeAsync().Wait();
 
             var bill = new Bill
                            {
@@ -97,7 +97,7 @@ namespace Wintellect.Sterling.Test.Database
                 Name = "Test"
             };
 
-            _database.Save(bill);
+            _database.SaveAsync( bill ).Wait();
             
             var person1 = new Person
                               {
@@ -105,7 +105,7 @@ namespace Wintellect.Sterling.Test.Database
                 Name = "Martin"
             };
 
-            _database.Save(person1);          
+            _database.SaveAsync( person1 ).Wait();
 
             var partaker1 = new Partaker
                                 {
@@ -116,7 +116,7 @@ namespace Wintellect.Sterling.Test.Database
 
             bill.Partakers.Add(partaker1);
 
-            _database.Save(bill);            
+            _database.SaveAsync( bill ).Wait();
 
             var person2 = new Person
                               {
@@ -124,7 +124,7 @@ namespace Wintellect.Sterling.Test.Database
                 Name = "Jeremy"
             };
 
-            _database.Save(person2);
+            _database.SaveAsync( person2 ).Wait();
             
             var partaker2 = new Partaker
                                 {
@@ -135,7 +135,7 @@ namespace Wintellect.Sterling.Test.Database
 
             bill.Partakers.Add(partaker2);
 
-            _database.Save(bill);
+            _database.SaveAsync( bill ).Wait();
 
             var partaker3 = new Partaker()
                                 {
@@ -146,9 +146,9 @@ namespace Wintellect.Sterling.Test.Database
 
             bill.Partakers.Add(partaker3);
 
-            _database.Save(bill);
+            _database.SaveAsync( bill ).Wait();
 
-            _database.Flush();
+            _database.FlushAsync().Wait();
             
             var billKeys = _database.Query<Bill, Guid>();
 

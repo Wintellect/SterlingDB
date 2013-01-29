@@ -131,7 +131,7 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TriggerDatabase>();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
 
             // get the next key in the database for auto-assignment
             var nextKey = _databaseInstance.Query<TriggerClass, int>().Any() ?
@@ -144,42 +144,45 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestTriggerBeforeSaveWithSuccess()
         {
-            var key1 = _databaseInstance.Save<TriggerClass,int>(new TriggerClass {Data = Guid.NewGuid().ToString()});
-            var key2 = _databaseInstance.Save<TriggerClass, int>(new TriggerClass { Data = Guid.NewGuid().ToString() });
+            var key1 = _databaseInstance.SaveAsync<TriggerClass, int>( new TriggerClass { Data = Guid.NewGuid().ToString() } ).Result;
+            var key2 = _databaseInstance.SaveAsync<TriggerClass, int>( new TriggerClass { Data = Guid.NewGuid().ToString() } ).Result;
             Assert.IsTrue(key1 > 0, "Trigger failed: key is not greater than 0.");
             Assert.IsTrue(key2 > 0, "Save failed: second key is not greater than 0.");
             Assert.IsTrue(key2 - key1 == 1, "Save failed: second key isn't one greater than first key.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestTriggerBeforeSaveWithFailure()
         {
             var handled = false;
             try
             {
-                _databaseInstance.Save<TriggerClass, int>(new TriggerClass { Id = TriggerClassTestTrigger.BADSAVE, Data = Guid.NewGuid().ToString() });            
+                _databaseInstance.SaveAsync<TriggerClass, int>( new TriggerClass { Id = TriggerClassTestTrigger.BADSAVE, Data = Guid.NewGuid().ToString() } ).Wait();
             }
-            catch(SterlingTriggerException)
+            catch ( AggregateException ex )
             {
-                handled = true;
+                if ( ex.InnerExceptions.Single() is SterlingTriggerException )
+                {
+                    handled = true;
+                }
             }
 
             Assert.IsTrue(handled, "Save failed: trigger did not throw exception");
 
-            var actual = _databaseInstance.Load<TriggerClass>(TriggerClassTestTrigger.BADSAVE);
+            var actual = _databaseInstance.LoadAsync<TriggerClass>( TriggerClassTestTrigger.BADSAVE ).Result;
 
             Assert.IsNull(actual, "Trigger failed: instance was saved.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestTriggerOnChildren()
         {
             var trigger = new TriggerListTestTrigger(100);
@@ -192,9 +195,9 @@ namespace Wintellect.Sterling.Test.Database
                 subModel.Key = -1*subModel.Key;
             }
 
-            var key = _databaseInstance.Save(expected);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
 
-            var actual = _databaseInstance.Load<TestListModel>(key);
+            var actual = _databaseInstance.LoadAsync<TestListModel>( key ).Result;
 
             Assert.IsNotNull(actual.Children, "Trigger failed: child list is null.");
             Assert.AreEqual(expected.Children.Count, actual.Children.Count, "Trigger failed: actual child count different.");
@@ -205,32 +208,35 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance.UnregisterTrigger(trigger);
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestTriggerAfterSave()
         {
             var target = new TriggerClass {Data = Guid.NewGuid().ToString(), IsDirty = true};
-            _databaseInstance.Save<TriggerClass, int>(target);
+            _databaseInstance.SaveAsync<TriggerClass, int>( target ).Wait();
             Assert.IsFalse(target.IsDirty, "Trigger failed: is dirty flag was not reset.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestTriggerBeforeDelete()
         {
             var instance1 = new TriggerClass {Data = Guid.NewGuid().ToString()};
-            _databaseInstance.Save<TriggerClass, int>(instance1);
-            var key2 = _databaseInstance.Save<TriggerClass, int>(new TriggerClass { Id = TriggerClassTestTrigger.BADDELETE, Data = Guid.NewGuid().ToString() });
+            _databaseInstance.SaveAsync<TriggerClass, int>( instance1 ).Wait();
+            var key2 = _databaseInstance.SaveAsync<TriggerClass, int>( new TriggerClass { Id = TriggerClassTestTrigger.BADDELETE, Data = Guid.NewGuid().ToString() } ).Result;
 
-            _databaseInstance.Delete(instance1); // should be no problem
+            _databaseInstance.DeleteAsync( instance1 ).Wait(); // should be no problem
 
             var handled = false;
 
             try
             {
-                _databaseInstance.Delete(typeof(TriggerClass), key2);
+                _databaseInstance.DeleteAsync( typeof( TriggerClass ), key2 ).Wait();
             }
-            catch(SterlingTriggerException)
+            catch ( AggregateException ex )
             {
-                handled = true;
+                if ( ex.InnerExceptions.Single() is SterlingTriggerException )
+                {
+                    handled = true;
+                }
             }
 
             Assert.IsTrue(handled, "Trigger failed to throw exception for delete operation on key = 5.");

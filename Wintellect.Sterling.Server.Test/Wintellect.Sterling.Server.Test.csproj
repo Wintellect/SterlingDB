@@ -50,7 +50,6 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="Database\TestPendingOperation.cs" />
     <Compile Include="Database\TestActivation.cs" />
     <Compile Include="Database\TestAggregateList.cs" />
     <Compile Include="Database\TestArrays.cs" />

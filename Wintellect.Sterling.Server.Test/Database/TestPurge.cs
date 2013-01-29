@@ -32,27 +32,27 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestPurgeAction()
         {
             // save a few objects
             var sample = TestModel.MakeTestModel();
-            _databaseInstance.Save(sample);
-            _databaseInstance.Save(TestModel.MakeTestModel());
-            _databaseInstance.Save(TestModel.MakeTestModel());
+            _databaseInstance.SaveAsync( sample ).Wait();
+            _databaseInstance.SaveAsync( TestModel.MakeTestModel() ).Wait();
+            _databaseInstance.SaveAsync( TestModel.MakeTestModel() ).Wait();
 
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
 
             // query should be empty
             Assert.IsFalse(_databaseInstance.Query<TestModel, int>().Any(), "Purge failed: key list still exists.");
 
             // load should be empty
-            var actual = _databaseInstance.Load<TestModel>(sample.Key);
+            var actual = _databaseInstance.LoadAsync<TestModel>( sample.Key ).Result;
 
             Assert.IsNull(actual, "Purge failed: was able to load item.");
         }

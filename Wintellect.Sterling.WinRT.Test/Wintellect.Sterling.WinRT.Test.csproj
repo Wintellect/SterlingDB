@@ -160,9 +160,6 @@
     <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestNullable.cs">
       <Link>Database\TestNullable.cs</Link>
     </Compile>
-    <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestPendingOperation.cs">
-      <Link>Database\TestPendingOperation.cs</Link>
-    </Compile>
     <Compile Include="..\Wintellect.Sterling.Server.Test\Database\TestPurge.cs">
       <Link>Database\TestPurge.cs</Link>
     </Compile>

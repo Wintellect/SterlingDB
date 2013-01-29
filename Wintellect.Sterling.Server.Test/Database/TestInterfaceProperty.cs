@@ -69,25 +69,25 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<InterfaceDatabase>();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestInterface()
         {
             var test = new TargetClass { Id = 1, SubInterface = new InterfaceClass { Id = 5, Value = 6 }};
-            
-            _databaseInstance.Save(test);
-            
-            var actual = _databaseInstance.Load<TargetClass>(1);
+
+            _databaseInstance.SaveAsync( test ).Wait();
+
+            var actual = _databaseInstance.LoadAsync<TargetClass>( 1 ).Result;
             
             Assert.AreEqual(test.Id, actual.Id, "Failed to load class with interface property: key mismatch.");
             Assert.IsNotNull(test.SubInterface, "Failed to load class with interface property: interface property is null.");

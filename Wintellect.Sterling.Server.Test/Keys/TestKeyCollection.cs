@@ -51,7 +51,7 @@ namespace Wintellect.Sterling.Test.Keys
                                                         _GetTestModelByKey);
         }       
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestAddKey()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
@@ -61,7 +61,7 @@ namespace Wintellect.Sterling.Test.Keys
             Assert.AreEqual(1, _target.NextKey, "Next key not advanced.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestAddDuplicateKey()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
@@ -74,7 +74,7 @@ namespace Wintellect.Sterling.Test.Keys
             Assert.AreEqual(1, _target.Query.Count(), "Key list count is incorrect.");
         }
         
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestRemoveKey()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
@@ -86,7 +86,7 @@ namespace Wintellect.Sterling.Test.Keys
             Assert.AreEqual(0, _target.Query.Count(), "Key was not removed.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestQueryable()
         {
             _target.AddKey(_models[0].Key);
@@ -104,7 +104,7 @@ namespace Wintellect.Sterling.Test.Keys
             
         }
          
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSerialization()
         {
             _target.AddKey(_models[0].Key);

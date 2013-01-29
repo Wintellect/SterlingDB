@@ -33,19 +33,19 @@ namespace Wintellect.Sterling.Test.Database
             for (var i = 0; i < 10; i++)
             {
                 _modelList.Add(TestModel.MakeTestModel());
-                _databaseInstance.Save(_modelList[i]);
+                _databaseInstance.SaveAsync(_modelList[i]).Wait();
             }
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSequentialQuery()
         {
             // set up queries
@@ -61,7 +61,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(idx, _modelList.Count, "Error in query: wrong number of rows.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestDescendingQuery()
         {
             var descending = from k in _databaseInstance.Query<TestModel, string, int>(TestDatabaseInstance.DATAINDEX) orderby k.Index descending select k.Key;
@@ -76,12 +76,12 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(idx, _modelList.Count, "Error in query: wrong number of rows.");
         }        
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestUnrolledQuery()
         {
             _modelList.Sort((m1, m2) => m1.Date.CompareTo(m2.Date));
             var unrolled = from k in _databaseInstance.Query<TestModel, string, int>(TestDatabaseInstance.DATAINDEX) 
-                           orderby k.LazyValue.Value.Date select k.LazyValue.Value;
+                           orderby k.Value.Result.Date select k.Value.Result;
 
             var idx = 0;
 

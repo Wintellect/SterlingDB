@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Serialization;
 

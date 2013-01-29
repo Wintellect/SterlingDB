@@ -31,31 +31,31 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNullDictionary()
         {
             var expected = TestClassWithDictionary.MakeTestClassWithDictionary();
             expected.DictionaryWithBaseClassAsValue = null;
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestClassWithDictionary>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestClassWithDictionary>( key ).Result;
             
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNull(actual.DictionaryWithBaseClassAsValue, "Save/load failed: dictionary is not null.");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestEmptyDictionary()
         {
             var expected = TestClassWithDictionary.MakeTestClassWithDictionary();
             expected.DictionaryWithBaseClassAsValue.Clear();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestClassWithDictionary>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestClassWithDictionary>( key ).Result;
             
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
@@ -63,12 +63,12 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(0, actual.DictionaryWithBaseClassAsValue.Count, "Save/load failed: dictionary size mismatch.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestDictionarySaveAndLoad()
         {
             var expected = TestClassWithDictionary.MakeTestClassWithDictionary();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestClassWithDictionary>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestClassWithDictionary>( key ).Result;
 
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");

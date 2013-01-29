@@ -57,33 +57,33 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<NullableDatabase>();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNotNull()
         {
             var test = new NullableClass {Id = 1, Value = 1};
-            _databaseInstance.Save(test);
-            var actual = _databaseInstance.Load<NullableClass>(1);
+            _databaseInstance.SaveAsync( test ).Wait();
+            var actual = _databaseInstance.LoadAsync<NullableClass>( 1 ).Result;
             Assert.AreEqual(test.Id, actual.Id, "Failed to load nullable with nullable set: key mismatch.");
             Assert.AreEqual(test.Value, actual.Value, "Failed to load nullable with nullable set: value mismatch.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNull()
         {
             var test = new NullableClass { Id = 1, Value = null };
-            _databaseInstance.Save(test);
-            var actual = _databaseInstance.Load<NullableClass>(1);
+            _databaseInstance.SaveAsync( test ).Wait();
+            var actual = _databaseInstance.LoadAsync<NullableClass>( 1 ).Result;
             Assert.AreEqual(test.Id, actual.Id, "Failed to load nullable with nullable set: key mismatch.");
             Assert.IsNull(actual.Value, "Failed to load nullable with nullable set: value mismatch.");
         }

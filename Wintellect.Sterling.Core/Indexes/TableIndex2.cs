@@ -21,8 +21,6 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         public TIndex2 Index2 { get; private set;}
 
-        public Tuple<TIndex1, TIndex2> TupleIndex { get; private set; }
-
         //// <param name="getter">The getter</param>
         /// <summary>
         ///     Construct with how to get the key
@@ -31,14 +29,13 @@ namespace Wintellect.Sterling.Core.Indexes
         /// <param name="key">The associated key with the index</param>
         /// <param name="getter">Getter method for loading an instance</param>
         /// <param name="index1">Value of the first index</param>
-        public TableIndex(TIndex1 index1, TIndex2 index2, TKey key, Func<TKey, T> getter) : base(Tuple.Create(index1,index2), key, getter)
+        internal TableIndex(TIndex1 index1, TIndex2 index2, TKey key, Func<TKey, T> getter) : base(Tuple.Create(index1,index2), key, getter)
         {
             Index1 = index1;
             Index2 = index2;
-            TupleIndex = Tuple.Create(index1, index2);
         }
 
-        public TableIndex(TableIndex<T, Tuple<TIndex1, TIndex2>, TKey> baseIndex, Func<TKey, T> getter) : base(baseIndex.Index, baseIndex.Key, getter)
+        internal TableIndex(TableIndex<T, Tuple<TIndex1, TIndex2>, TKey> baseIndex, Func<TKey, T> getter) : base(baseIndex.Index, baseIndex.Key, getter)
         {            
         }
 

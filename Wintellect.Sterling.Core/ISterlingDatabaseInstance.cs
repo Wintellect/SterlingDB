@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Events;
 using Wintellect.Sterling.Core.Indexes;
@@ -89,14 +90,13 @@ namespace Wintellect.Sterling.Core
         /// <returns>The key type</returns>
         Type GetKeyType(Type table);
 
-        
         /// <summary>
         ///     Save it
         /// </summary>
         /// <typeparam name="T">The instance type</typeparam>
         /// <typeparam name="TKey">Save it</typeparam>
         /// <param name="instance">The instance</param>
-        TKey Save<T, TKey>(T instance) where T : class, new();
+        Task<TKey> SaveAsync<T, TKey>(T instance) where T : class, new();
 
         /// <summary>
         ///     Save a sub-class under a base class table definition
@@ -105,7 +105,7 @@ namespace Wintellect.Sterling.Core
         /// <typeparam name="TKey">Save it</typeparam>
         /// <param name="instance">An instance or sub-class of the table type</param>
         /// <returns></returns>
-        TKey SaveAs<T, TKey>(T instance) where T : class,new();
+        Task<TKey> SaveAsAsync<T, TKey>(T instance) where T : class,new();
 
         /// <summary>
         ///     Query (keys only)
@@ -143,7 +143,7 @@ namespace Wintellect.Sterling.Core
         /// <typeparam name="T">The type</typeparam>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        object Save<T>(T instance) where T : class, new();
+        Task<object> SaveAsync<T>(T instance) where T : class, new();
 
         /// <summary>
         ///     Save a sub-class under a base class table definition
@@ -151,7 +151,7 @@ namespace Wintellect.Sterling.Core
         /// <typeparam name="T">The table type</typeparam>
         /// <param name="instance">The instance or sub-class of the table type</param>
         /// <returns></returns>
-        object SaveAs<T>(T instance) where T : class,new();
+        Task<object> SaveAsAsync<T>(T instance) where T : class,new();
 
         /// <summary>
         ///     Save when key is not known
@@ -161,7 +161,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="instance">The instance</param>
         /// <param name="cache">The cycle cache</param>
         /// <returns>The key</returns>
-        object Save(Type actualType, Type tableType, object instance, CycleCache cache);
+        Task<object> SaveAsync(Type actualType, Type tableType, object instance, CycleCache cache);
 
         /// <summary>
         ///     Save when key is not known
@@ -169,7 +169,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type to save</param>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        object Save(Type type, object instance);
+        Task<object> SaveAsync(Type type, object instance);
 
         /// <summary>
         ///     Save when key is not known
@@ -177,27 +177,12 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The table type to save against</param>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        object SaveAs(Type type, object instance);
-
-        /// <summary>
-        ///     Save asynchronously
-        /// </summary>
-        /// <typeparam name="T">The type to save</typeparam>
-        /// <param name="list">A list of items to save</param>
-        /// <returns>A unique identifier for the batch</returns>
-        PendingOperation SaveAsync<T>(IList<T> list);
-
-        /// <summary>
-        ///     Non-generic asynchronous save
-        /// </summary>
-        /// <param name="list">The list of items</param>
-        /// <returns>A unique job identifier</returns>
-        PendingOperation SaveAsync(IList list);
+        Task<object> SaveAsAsync(Type type, object instance);
 
         /// <summary>
         ///     Flush all keys and indexes to storage
         /// </summary>
-        void Flush();        
+        Task FlushAsync();        
 
         /// <summary>
         ///     Load it 
@@ -206,7 +191,7 @@ namespace Wintellect.Sterling.Core
         /// <typeparam name="TKey">The key type</typeparam>
         /// <param name="key">The value of the key</param>
         /// <returns>The instance</returns>
-        T Load<T, TKey>(TKey key) where T : class, new();
+        Task<T> LoadAsync<T, TKey>(TKey key) where T : class, new();
 
         /// <summary>
         ///     Load it (key type not typed)
@@ -214,7 +199,7 @@ namespace Wintellect.Sterling.Core
         /// <typeparam name="T">The type to load</typeparam>
         /// <param name="key">The key</param>
         /// <returns>The instance</returns>
-        T Load<T>(object key) where T : class, new();
+        Task<T> LoadAsync<T>(object key) where T : class, new();
 
         /// <summary>
         ///     Load it without knowledge of the key type
@@ -223,7 +208,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="key">The key</param>
         /// <param name="cache">The cycle cache</param>
         /// <returns>The instance</returns>
-        object Load(Type type, object key, CycleCache cache);
+        Task<object> LoadAsync(Type type, object key, CycleCache cache);
 
         /// <summary>
         ///     Load it without knowledge of the key type
@@ -231,37 +216,37 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type to load</param>
         /// <param name="key">The key</param>
         /// <returns>The instance</returns>
-        object Load(Type type, object key);
+        Task<object> LoadAsync(Type type, object key);
 
         /// <summary>
         ///     Delete it 
         /// </summary>
         /// <typeparam name="T">The type to delete</typeparam>
         /// <param name="instance">The instance</param>
-        void Delete<T>(T instance) where T : class;
+        Task DeleteAsync<T>(T instance) where T : class;
 
         /// <summary>
         ///     Delete it (non-generic)
         /// </summary>
         /// <param name="type">The type</param>
         /// <param name="key">The key</param>
-        void Delete(Type type, object key);
+        Task DeleteAsync(Type type, object key);
 
         /// <summary>
         ///     Truncate all records for a type
         /// </summary>
         /// <param name="type">The type</param>
-        void Truncate(Type type);
+        Task TruncateAsync(Type type);
 
         /// <summary>
         ///     Purge the entire database - wipe it clean!
         /// </summary>
-        void Purge();
+        Task PurgeAsync();
 
         /// <summary>
         ///     Refresh indexes and keys from disk
         /// </summary>
-        void Refresh();
+        Task RefreshAsync();
 
         /// <summary>
         ///     Event for sterling changes

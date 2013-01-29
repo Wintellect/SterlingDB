@@ -338,7 +338,15 @@ namespace Wintellect.Sterling.Core.Serialization
 
             if (foreignTable == null) return;
 
-            var foreignKey = _database.Save(foreignTable.GetType(), foreignTable.GetType(),foreignTable, cache);
+            var task = _database.SaveAsync(foreignTable.GetType(), foreignTable.GetType(),foreignTable, cache);
+
+            //TODO: fix this
+            if( task.Wait( TimeSpan.FromSeconds( 10 ) ) == false )
+            {
+                throw new TimeoutException( "Foreign key save operation failed to complete in 10 seconds." );
+            }
+
+            var foreignKey = task.Result;
             
             // need to be able to serialize the key 
             if (!_serializer.CanSerialize(foreignKey.GetType()))
@@ -508,8 +516,18 @@ namespace Wintellect.Sterling.Core.Serialization
                     return new KeyValuePair<string, object>(propertyName, cached);
                 }
 
-                cached = _database.Load(typeResolved, key, cache);
+                var task = _database.LoadAsync(typeResolved, key, cache);
+
+                //TODO: fix this
+                if ( task.Wait( TimeSpan.FromSeconds( 10 ) ) == false )
+                {
+                    throw new TimeoutException( "Foreign key load operation failed to complete in 10 seconds." );
+                }
+
+                cached = task.Result;
+
                 cache.Add(typeResolved, cached, key);
+                
                 return new KeyValuePair<string, object>(propertyName, cached);
             }
 

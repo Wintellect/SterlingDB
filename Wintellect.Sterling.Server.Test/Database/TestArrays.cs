@@ -32,20 +32,20 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNullArray()
         {
             var expected = TestClassWithArray.MakeTestClassWithArray();
             expected.BaseClassArray = null;
             expected.ClassArray = null;
             expected.ValueTypeArray = null;
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestClassWithArray>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestClassWithArray>( key ).Result;
             
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
@@ -54,12 +54,12 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsNull(actual.ValueTypeArray, "Save/load: array should be null");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestArray()
         {
             var expected = TestClassWithArray.MakeTestClassWithArray();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestClassWithArray>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestClassWithArray>( key ).Result;
             
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");

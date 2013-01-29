@@ -32,17 +32,17 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();            
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNullList()
         {
             var expected = TestClassWithStruct.MakeTestClassWithStruct();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestClassWithStruct>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestClassWithStruct>(key).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNotNull(actual.Structs, "Save/load failed: list not initialized.");

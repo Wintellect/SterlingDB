@@ -97,10 +97,10 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestByteStreamInterceptorDatabase>();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestData()
         {
             const string DATA = "Data to be intercepted";
@@ -110,9 +110,9 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance.RegisterInterceptor<ByteInterceptor>();
             _databaseInstance.RegisterInterceptor<ByteInterceptor2>();
 
-            _databaseInstance.Save(byteStreamData);
+            _databaseInstance.SaveAsync( byteStreamData ).Wait();
 
-            var loadedByteStreamData = _databaseInstance.Load<ByteStreamData>("data");
+            var loadedByteStreamData = _databaseInstance.LoadAsync<ByteStreamData>( "data" ).Result;
 
             Assert.AreEqual(DATA, loadedByteStreamData.Data, "Byte interceptor test failed: data does not match");
 
@@ -120,7 +120,7 @@ namespace Wintellect.Sterling.Test.Database
 
             try
             {
-                loadedByteStreamData = _databaseInstance.Load<ByteStreamData>("data");
+                loadedByteStreamData = _databaseInstance.LoadAsync<ByteStreamData>( "data" ).Result;
             }
             catch
             {
@@ -132,7 +132,7 @@ namespace Wintellect.Sterling.Test.Database
 
             _databaseInstance.RegisterInterceptor<ByteInterceptor2>();
 
-            loadedByteStreamData = _databaseInstance.Load<ByteStreamData>("data");
+            loadedByteStreamData = _databaseInstance.LoadAsync<ByteStreamData>( "data" ).Result;
 
             Assert.AreEqual(DATA, loadedByteStreamData.Data, "Byte interceptor test failed: data does not match");
         }
@@ -140,7 +140,7 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }

@@ -31,42 +31,42 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNullList()
         {
             var expected = TestListModel.MakeTestListModel();
             expected.Children = null;
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestListModel>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestListModel>(key).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNull(actual.Children, "Save/load failed: list should be null.");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestEmptyList()
         {
             var expected = TestListModel.MakeTestListModel();
             expected.Children.Clear();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestListModel>(key);
+            var key = _databaseInstance.SaveAsync(expected).Result;
+            var actual = _databaseInstance.LoadAsync<TestListModel>(key).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNotNull(actual.Children, "Save/load failed: list not initialized.");
             Assert.AreEqual(0, actual.Children.Count, "Save/load failed: list size mismatch.");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestList()
         {
             var expected = TestListModel.MakeTestListModel();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestListModel>(key);
+            var key = _databaseInstance.SaveAsync(expected).Result;
+            var actual = _databaseInstance.LoadAsync<TestListModel>(key).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNotNull(actual.Children, "Save/load failed: list not initialized.");
@@ -78,12 +78,12 @@ namespace Wintellect.Sterling.Test.Database
             }
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestModelAsList()
         {
             var expected = TestModelAsListModel.MakeTestModelAsList();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestModelAsListModel>(key);
+            var key = _databaseInstance.SaveAsync(expected).Result;
+            var actual = _databaseInstance.LoadAsync<TestModelAsListModel>( key ).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.Id, actual.Id, "Save/load failed: key mismatch.");
             Assert.AreEqual(expected.Count, actual.Count, "Save/load failed: list size mismatch.");
@@ -94,13 +94,13 @@ namespace Wintellect.Sterling.Test.Database
             }
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestModelAsListWithParentReference()
         {
             var expected = TestModelAsListModel.MakeTestModelAsListWithParentReference();
-            var key = _databaseInstance.Save(expected);
-           
-            var actual = _databaseInstance.Load<TestModelAsListModel>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+
+            var actual = _databaseInstance.LoadAsync<TestModelAsListModel>( key ).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.Id, actual.Id, "Save/load failed: key mismatch.");
             Assert.AreEqual(expected.Count, actual.Count, "Save/load failed: list size mismatch.");

@@ -74,7 +74,7 @@ namespace Wintellect.Sterling.Test.Database
             //}
 
 
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;
             
@@ -82,7 +82,7 @@ namespace Wintellect.Sterling.Test.Database
 
 //#if SILVERLIGHT
 //        [Asynchronous]
-//        [TestMethod]
+//        [TestMethod][Timeout(1000)]
 //        public void TestSave()
 //        {
 //            var grid = new Grid();
@@ -116,7 +116,7 @@ namespace Wintellect.Sterling.Test.Database
 //        }
 
 //        [Asynchronous]
-//        [TestMethod]
+//        [TestMethod][Timeout(1000)]
 //        public void TestSaveNoProgress()
 //        {
 //            var grid = new Grid();
@@ -143,7 +143,7 @@ namespace Wintellect.Sterling.Test.Database
 //        }
 
 //        [Asynchronous]
-//        [TestMethod]
+//        [TestMethod][Timeout(1000)]
 //        public void TestSaveWithCancel()
 //        {
 //            var grid = new Grid();
@@ -186,7 +186,7 @@ namespace Wintellect.Sterling.Test.Database
         [Asynchronous]
         [Tag("Concurrent")]
 #endif
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestConcurrentSaveAndLoad()
         {
             var saveEvent = new ManualResetEvent(false);
@@ -195,7 +195,7 @@ namespace Wintellect.Sterling.Test.Database
             // Initialize the DB with some data.
             foreach (var item in _modelList)
             {
-                _databaseInstance.Save(item);
+                _databaseInstance.SaveAsync( item ).Wait();
             }
 
             var savedCount = 0;
@@ -208,7 +208,7 @@ namespace Wintellect.Sterling.Test.Database
                                    {
                                        foreach (var item in _modelList)
                                        {
-                                           _databaseInstance.Save(item);
+                                           _databaseInstance.SaveAsync( item ).Wait();
                                            savedCount++;
                                        }
 
@@ -268,7 +268,7 @@ namespace Wintellect.Sterling.Test.Database
         [Asynchronous]
         [Tag("Concurrent")]
 #endif
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestConcurrentSaveAndLoadWithIndex()
         {
             var saveEvent = new ManualResetEvent(false);
@@ -277,7 +277,7 @@ namespace Wintellect.Sterling.Test.Database
             // Initialize the DB with some data.
             foreach (var item in _modelList)
             {
-                _databaseInstance.Save(item);
+                _databaseInstance.SaveAsync( item ).Wait();
             }
 
             var savedCount = 0;
@@ -290,7 +290,7 @@ namespace Wintellect.Sterling.Test.Database
                                    {
                                        foreach (var item in _modelList)
                                        {
-                                           _databaseInstance.Save(item);
+                                           _databaseInstance.SaveAsync( item ).Wait();
                                            savedCount++;
                                        }
 
@@ -318,7 +318,7 @@ namespace Wintellect.Sterling.Test.Database
                                            from key in
                                                _databaseInstance.Query<TestModel, DateTime, string, int>("IndexDateData")
                                            where key.Index.Item1.Month == now.Month
-                                           select key.LazyValue.Value;
+                                           select key.Value.Result;
 
                                        var list = new List<TestModel>(query);
 

@@ -27,19 +27,19 @@ namespace Wintellect.Sterling.Test.Keys
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>();    
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
        
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSave()
         {
             const int LISTSIZE = 20;
@@ -60,13 +60,13 @@ namespace Wintellect.Sterling.Test.Keys
                                         Data = Guid.NewGuid().ToString()
                                     };
                 list[x] = testClass;
-                _databaseInstance.Save(testClass);
+                _databaseInstance.SaveAsync( testClass ).Wait();
             }
 
             for (var x = 0; x < LISTSIZE; x++)
             {
                 var compositeKey = TestDatabaseInstance.GetCompositeKey(list[x]);
-                var actual = _databaseInstance.Load<TestCompositeClass>(compositeKey);
+                var actual = _databaseInstance.LoadAsync<TestCompositeClass>( compositeKey ).Result;
                 Assert.IsNotNull(actual, "Load failed.");
                 Assert.AreEqual(compositeKey, TestDatabaseInstance.GetCompositeKey(actual), "Load failed: key mismatch.");
                 Assert.AreEqual(list[x].Data, actual.Data, "Load failed: data mismatch.");

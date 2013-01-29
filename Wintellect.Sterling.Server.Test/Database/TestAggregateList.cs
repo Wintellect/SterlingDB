@@ -31,42 +31,42 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestNullList()
         {
             var expected = TestAggregateListModel.MakeTestAggregateListModel();
             expected.Children = null;
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestAggregateListModel>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestAggregateListModel>( key ).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNull(actual.Children, "Save/load failed: list should be null.");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestEmptyList()
         {
             var expected = TestAggregateListModel.MakeTestAggregateListModel();
             expected.Children.Clear();
-            var key = _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestAggregateListModel>(key);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
+            var actual = _databaseInstance.LoadAsync<TestAggregateListModel>( key ).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNotNull(actual.Children, "Save/load failed: list not initialized.");
             Assert.AreEqual(0, actual.Children.Count, "Save/load failed: list size mismatch.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestList()
         {
             var expected = TestAggregateListModel.MakeTestAggregateListModel();
-            _databaseInstance.Save(expected);
-            var actual = _databaseInstance.Load<TestAggregateListModel>(expected.ID);
+            _databaseInstance.SaveAsync(expected).Wait();
+            var actual = _databaseInstance.LoadAsync<TestAggregateListModel>( expected.ID ).Result;
             Assert.IsNotNull(actual, "Save/load failed: model is null.");
             Assert.AreEqual(expected.ID, actual.ID, "Save/load failed: key mismatch.");
             Assert.IsNotNull(actual.Children, "Save/load failed: list not initialized.");

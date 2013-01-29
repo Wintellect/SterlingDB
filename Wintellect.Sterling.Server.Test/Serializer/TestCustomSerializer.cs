@@ -154,7 +154,7 @@ namespace Wintellect.Sterling.Test.Serializer
             _engine.SterlingDatabase.RegisterSerializer<SupportSerializer>();            
             _engine.Activate();
             DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>();
-            DatabaseInstance.Purge();
+            DatabaseInstance.PurgeAsync().Wait();
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace Wintellect.Sterling.Test.Serializer
         [TestCleanup]
         public void TestCleanup()
         {
-            DatabaseInstance.Purge();
+            DatabaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             DatabaseInstance = null;
         }
@@ -172,21 +172,21 @@ namespace Wintellect.Sterling.Test.Serializer
         ///     Test the serializer by creating a typically non-supported class and processing with
         ///     the custom serializer
         /// </summary>
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestCustomSaveAndLoad()
         {
             var expectedList = new[] {TestModel.MakeTestModel(), TestModel.MakeTestModel(), TestModel.MakeTestModel()};
             var expected = new NotSupportedClass {Id = 1};
             expected.InnerList.Add(expectedList);
 
-            var key = DatabaseInstance.Save(expected);
+            var key = DatabaseInstance.SaveAsync( expected ).Result;
 
             // confirm the test models were saved as "foreign keys" 
             var count = DatabaseInstance.Query<TestModel, int>().Count();
 
             Assert.AreEqual(expectedList.Length, count, "Load failed: test models were not saved independently.");
 
-            var actual = DatabaseInstance.Load<NotSupportedClass>(key);
+            var actual = DatabaseInstance.LoadAsync<NotSupportedClass>( key ).Result;
             Assert.IsNotNull(actual, "Load failed: instance is null.");
             Assert.AreEqual(expected.Id, actual.Id, "Load failed: key mismatch.");
 

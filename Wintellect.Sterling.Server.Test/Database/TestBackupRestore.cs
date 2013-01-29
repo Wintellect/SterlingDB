@@ -26,12 +26,12 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestBackupAndRestore()
         {
             if (_driver == null)
@@ -47,7 +47,7 @@ namespace Wintellect.Sterling.Test.Database
             // test saving and reloading
             var expected = TestModel.MakeTestModel();
 
-            _databaseInstance.Save(expected);
+            _databaseInstance.SaveAsync(expected).Wait();
 
             // now back it up
             var memStream = new MemoryStream();
@@ -62,9 +62,9 @@ namespace Wintellect.Sterling.Test.Database
             }
 
             // now purge the database
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
 
-            var actual = _databaseInstance.Load<TestModel>(expected.Key);
+            var actual = _databaseInstance.LoadAsync<TestModel>( expected.Key ).Result;
 
             // confirm the database is gone
             Assert.IsNull(actual, "Purge failed, was able to load the test model.");
@@ -95,7 +95,7 @@ namespace Wintellect.Sterling.Test.Database
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);            
 
-            actual = _databaseInstance.Load<TestModel>(expected.Key);
+            actual = _databaseInstance.LoadAsync<TestModel>(expected.Key).Result;
 
             Assert.IsNotNull(actual, "Load failed.");
 

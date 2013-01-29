@@ -53,19 +53,19 @@
 //            _engine = new SterlingEngine();
 //            _engine.Activate();
 //            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<ImageDatabase>();
-//            _databaseInstance.Purge();
+//            _databaseInstance.PurgeAsync().Wait();
 //        }
 
 //        [TestCleanup]
 //        public void TestCleanup()
 //        {
-//            _databaseInstance.Purge();
+//            _databaseInstance.PurgeAsync().Wait();
 //            _engine.Dispose();
 //            _databaseInstance = null;            
 //        }
 
 //        [Asynchronous]
-//        [TestMethod]
+//        [TestMethod][Timeout(1000)]
 //        public void TestImageSaveAndRestore()
 //        {
 //            var grid = new Grid();

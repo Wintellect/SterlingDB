@@ -26,11 +26,7 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         private static readonly Dictionary<Type, object> _locks = new Dictionary<Type, object>();
 
-        /// <summary>
-        ///     Workers to track/flush
-        /// </summary>
-        private readonly List<PendingOperation> _workers = new List<PendingOperation>();
-
+        private long _taskCount = 0;
         private SerializationHelper _serializationHelper; 
 
         public SerializationHelper Helper
@@ -95,7 +91,13 @@ namespace Wintellect.Sterling.Core.Database
 
         public void Unload()
         {
-            Flush();
+            var task = FlushAsync();
+
+            //TODO: fix this
+            if ( task.Wait( TimeSpan.FromSeconds( 10 ) ) == false )
+            {
+                throw new TimeoutException( "Unload operation failed to complete in 10 seconds." );
+            }
         }
 
         /// <summary>
@@ -279,7 +281,8 @@ namespace Wintellect.Sterling.Core.Database
         public ITableDefinition CreateTableDefinition<T, TKey>(Func<T, TKey> keyFunction) where T : class, new()
         {
             return new TableDefinition<T, TKey>(Driver,
-                                                Load<T, TKey>, keyFunction);
+                                                ( key => GetLoadMethod<T>( typeof( T ), key, new CycleCache() )() ),
+                                                keyFunction);
         }
 
         /// <summary>
@@ -378,17 +381,6 @@ namespace Wintellect.Sterling.Core.Database
         }
 
         /// <summary>
-        ///     Save it
-        /// </summary>
-        /// <typeparam name="T">The instance type</typeparam>
-        /// <typeparam name="TKey">Save it</typeparam>
-        /// <param name="instance">The instance</param>
-        public TKey Save<T, TKey>(T instance) where T : class, new()
-        {
-            return (TKey) Save(typeof (T), instance);
-        }
-
-        /// <summary>
         ///     Query (keys only)
         /// </summary>
         /// <typeparam name="T">The type to query</typeparam>
@@ -483,15 +475,26 @@ namespace Wintellect.Sterling.Core.Database
         }
 
         /// <summary>
+        ///     Save it
+        /// </summary>
+        /// <typeparam name="T">The instance type</typeparam>
+        /// <typeparam name="TKey">Save it</typeparam>
+        /// <param name="instance">The instance</param>
+        public Task<TKey> SaveAsync<T, TKey>( T instance ) where T : class, new()
+        {
+            return NewTask<TKey>( GetSaveMethod<TKey>( typeof( T ), typeof( T ), instance, new CycleCache() ) );
+        }
+
+        /// <summary>
         ///     Save an instance against a base class table definition
         /// </summary>
         /// <typeparam name="T">The table type</typeparam>
         /// <typeparam name="TKey">Save it</typeparam>
         /// <param name="instance">An instance or sub-class of the table type</param>
         /// <returns></returns>
-        public TKey SaveAs<T, TKey>(T instance) where T : class, new()
+        public Task<TKey> SaveAsAsync<T, TKey>(T instance) where T : class, new()
         {
-            return (TKey)SaveAs(instance);
+            return NewTask<TKey>( GetSaveMethod<TKey>( instance.GetType(), typeof( T ), instance, new CycleCache() ) );
         }
 
         /// <summary>
@@ -500,10 +503,10 @@ namespace Wintellect.Sterling.Core.Database
         /// <typeparam name="T">The table type</typeparam>
         /// <param name="instance">An instance or sub-class of the table type</param>
         /// <returns></returns>
-        public object SaveAs<T>(T instance) where T : class, new()
+        public Task<object> SaveAsAsync<T>(T instance) where T : class, new()
         {
             var tableType = typeof(T);
-            return Save(instance.GetType(), tableType, instance, new CycleCache());
+            return SaveAsync(instance.GetType(), tableType, instance, new CycleCache());
         }
 
         /// <summary>
@@ -512,14 +515,14 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="tableType"></param>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        public object SaveAs(Type tableType, object instance)
+        public Task<object> SaveAsAsync(Type tableType, object instance)
         {
             if (!PlatformAdapter.Instance.IsSubclassOf( instance.GetType(), tableType) || instance.GetType() != tableType)
             {
                 throw new SterlingException(string.Format("{0} is not of type {1}", instance.GetType().Name, tableType.Name));
             }
 
-            return Save(tableType, instance);
+            return SaveAsync(tableType, instance);
         }
 
         /// <summary>
@@ -528,9 +531,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="type">Type to save</param>
         /// <param name="instance">Instance</param>
         /// <returns>The key saved</returns>
-        public object Save(Type type, object instance)
+        public Task<object> SaveAsync(Type type, object instance)
         {
-            return Save(type, type, instance, new CycleCache());
+            return SaveAsync(type, type, instance, new CycleCache());
         }
 
         /// <summary>
@@ -541,93 +544,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="instance">The instance</param>
         /// <param name="cache">Cycle cache</param>
         /// <returns>The key</returns>
-        public object Save(Type actualType, Type tableType, object instance, CycleCache cache)
+        public Task<object> SaveAsync(Type actualType, Type tableType, object instance, CycleCache cache)
         {
-            if (!TableDefinitions.ContainsKey(tableType))
-            {
-                throw new SterlingTableNotFoundException(instance.GetType(), Name);
-            }
-
-            if (!TableDefinitions[tableType].IsDirty(instance))
-            {
-                return TableDefinitions[tableType].FetchKeyFromInstance(instance);
-            }
-
-            // call any before save triggers 
-            foreach (var trigger in _TriggerList(tableType).Where(trigger => !trigger.BeforeSave(actualType, instance)))
-            {
-                throw new SterlingTriggerException(
-                    Exceptions.Exceptions.BaseDatabaseInstance_Save_Save_suppressed_by_trigger, trigger.GetType());
-            }
-
-            var key = TableDefinitions[tableType].FetchKeyFromInstance(instance);            
-
-            int keyIndex;
-
-            if (cache.Check(instance))
-            {
-                return key;
-            }
-            
-            lock(TableDefinitions[tableType])
-            {
-                if (cache.Check(instance))
-                {
-                    return key;
-                }
-
-                cache.Add(tableType, instance, key);
-            
-                keyIndex = TableDefinitions[tableType].Keys.AddKey(key);
-            }
-
-            var memStream = new MemoryStream();
-
-            try
-            {                
-                using (var bw = new BinaryWriter(memStream))
-                {
-                    Helper.Save(actualType, instance, bw, cache,true);
-
-                    bw.Flush();
-
-                    if (_byteInterceptorList.Count > 0)
-                    {
-                        var bytes = memStream.ToArray();
-
-                        bytes = _byteInterceptorList.Aggregate(bytes,
-                                                               (current, byteInterceptor) =>
-                                                               byteInterceptor.Save(current));
-
-                        memStream = new MemoryStream(bytes);
-                    }
-
-                    memStream.Seek(0, SeekOrigin.Begin);
-                    Driver.Save(tableType, keyIndex, memStream.ToArray());
-                }
-            }
-            finally
-            {
-                memStream.Flush();
-                memStream.Dispose();
-            }
-
-
-            // update the indexes
-            foreach (var index in TableDefinitions[tableType].Indexes.Values)
-            {
-                index.AddIndex(instance, key);
-            }
-
-            // call post-save triggers
-            foreach (var trigger in _TriggerList(tableType))
-            {
-                trigger.AfterSave(actualType, instance);
-            }
-
-            _RaiseOperation(SterlingOperation.Save, tableType, key);
-
-            return key;
+            return NewTask<object>( GetSaveMethod<object>( actualType, tableType, instance, cache ) );
         }
 
         /// <summary>
@@ -636,101 +555,129 @@ namespace Wintellect.Sterling.Core.Database
         /// <typeparam name="T">The type of the instance</typeparam>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        public object Save<T>(T instance) where T : class, new()
+        public Task<object> SaveAsync<T>(T instance) where T : class, new()
         {
-            return Save(typeof (T), instance);
+            return SaveAsync(typeof (T), instance);
         }
 
-        /// <summary>
-        ///     Save asynchronously
-        /// </summary>
-        /// <typeparam name="T">The type to save</typeparam>
-        /// <param name="list">A list of items to save</param>
-        /// <returns>A unique identifier for the batch</returns>
-        public PendingOperation SaveAsync<T>(IList<T> list)
+        private Func<TKey> GetSaveMethod<TKey>( Type actualType, Type tableType, object instance, CycleCache cache )
         {
-            return SaveAsync((IList) list);
-        }
-
-        /// <summary>
-        ///     Non-generic asynchronous save
-        /// </summary>
-        /// <param name="list">The list of items</param>
-        /// <returns>A unique job identifier</returns>
-        public PendingOperation SaveAsync(IList list)
-        {
-            if (list == null)
+            return () =>
             {
-                throw new ArgumentNullException("list");
-            }
-
-            if (list.Count == 0)
-            {
-                return null;
-            }
-
-            if (!IsRegistered(list[0].GetType()))
-            {
-                throw new SterlingTableNotFoundException(list[0].GetType(), Name);
-            }
-
-            PendingOperation operation = null;
-
-            Action<CancellationToken, Action<decimal>> work = ( token, progressChanged ) =>
-            {
-                lock ( ( (ICollection) _workers ).SyncRoot )
+                if ( !TableDefinitions.ContainsKey( tableType ) )
                 {
-                    _workers.Add( operation );
+                    throw new SterlingTableNotFoundException( instance.GetType(), Name );
                 }
 
-                var index = 0;
+                if ( !TableDefinitions[ tableType ].IsDirty( instance ) )
+                {
+                    return (TKey) TableDefinitions[ tableType ].FetchKeyFromInstance( instance );
+                }
+
+                foreach ( var trigger in _TriggerList( tableType ).Where( trigger => !trigger.BeforeSave( actualType, instance ) ) )
+                {
+                    throw new SterlingTriggerException(
+                        Exceptions.Exceptions.BaseDatabaseInstance_Save_Save_suppressed_by_trigger, trigger.GetType() );
+                }
+
+                var key = (TKey) TableDefinitions[ tableType ].FetchKeyFromInstance( instance );
+
+                int keyIndex;
+
+                if ( cache.Check( instance ) )
+                {
+                    return key;
+                }
+
+                lock ( TableDefinitions[ tableType ] )
+                {
+                    if ( cache.Check( instance ) )
+                    {
+                        return key;
+                    }
+
+                    cache.Add( tableType, instance, key );
+
+                    keyIndex = TableDefinitions[ tableType ].Keys.AddKey( key );
+                }
+
+                var memStream = new MemoryStream();
 
                 try
                 {
-                    foreach ( var item in list )
+                    using ( var bw = new BinaryWriter( memStream ) )
                     {
-                        token.ThrowIfCancellationRequested();
+                        Helper.Save( actualType, instance, bw, cache, true );
 
-                        Save( item.GetType(), item );
+                        bw.Flush();
 
-                        var pct = index++ * 100 / list.Count;
+                        if ( _byteInterceptorList.Count > 0 )
+                        {
+                            var bytes = memStream.ToArray();
 
-                        progressChanged( pct );
+                            bytes = _byteInterceptorList.Aggregate( bytes, ( current, byteInterceptor ) => byteInterceptor.Save( current ) );
+
+                            memStream = new MemoryStream( bytes );
+                        }
+
+                        memStream.Seek( 0, SeekOrigin.Begin );
+
+                        Driver.Save( tableType, keyIndex, memStream.ToArray() );
                     }
                 }
                 finally
                 {
-                    lock ( ( (ICollection) _workers ).SyncRoot )
-                    {
-                        _workers.Remove( operation );
-                    }
+                    memStream.Flush();
+                    memStream.Dispose();
                 }
-            };
 
-            return new PendingOperation( work );
+                // update the indexes
+                foreach ( var index in TableDefinitions[ tableType ].Indexes.Values )
+                {
+                    index.AddIndex( instance, key );
+                }
+
+                // call post-save triggers
+                foreach ( var trigger in _TriggerList( tableType ) )
+                {
+                    trigger.AfterSave( actualType, instance );
+                }
+
+                _RaiseOperation( SterlingOperation.Save, tableType, key );
+
+                return key;
+            };
         }
 
         /// <summary>
         ///     Flush all keys and indexes to storage
         /// </summary>
-        public void Flush()
+        public Task FlushAsync()
         {
-            if (_locks == null || !_locks.ContainsKey(GetType())) return;
-            
-            lock (Lock)
+            if ( _locks == null || !_locks.ContainsKey( GetType() ) )
             {
-                foreach (var def in TableDefinitions.Values)
+                return Task.FromResult( true );    // can be any result...
+            }
+            else
+            {
+                return NewTask( () =>
                 {
-                    def.Keys.Flush();
-                    
-                    foreach (var idx in def.Indexes.Values)
+                    lock ( Lock )
                     {
-                        idx.Flush();
-                    }
-                }                                
-            }            
+                        foreach ( var def in TableDefinitions.Values )
+                        {
+                            def.Keys.Flush();
 
-            _RaiseOperation(SterlingOperation.Flush, GetType(), Name);
+                            foreach ( var idx in def.Indexes.Values )
+                            {
+                                idx.Flush();
+                            }
+                        }
+                    }
+
+                    _RaiseOperation( SterlingOperation.Flush, GetType(), Name );
+                } );
+            };
         }
 
         /// <summary>
@@ -740,9 +687,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <typeparam name="TKey">The key type</typeparam>
         /// <param name="key">The value of the key</param>
         /// <returns>The instance</returns>
-        public T Load<T, TKey>(TKey key) where T : class, new()
+        public Task<T> LoadAsync<T, TKey>(TKey key) where T : class, new()
         {
-            return (T) Load(typeof (T), key);
+            return LoadAsync<T>( (object) key);
         }
 
         /// <summary>
@@ -751,9 +698,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <typeparam name="T">The type to load</typeparam>
         /// <param name="key">The key</param>
         /// <returns>The instance</returns>
-        public T Load<T>(object key) where T : class, new()
+        public Task<T> LoadAsync<T>(object key) where T : class, new()
         {
-            return (T) Load(typeof (T), key);
+            return NewTask<T>( GetLoadMethod<T>( typeof( T ), key, new CycleCache() ) );
         }
 
         /// <summary>
@@ -762,9 +709,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="type">The type to load</param>
         /// <param name="key">The key</param>
         /// <returns>The object</returns>
-        public object Load(Type type, object key)
+        public Task<object> LoadAsync(Type type, object key)
         {
-            return Load(type, key, new CycleCache());
+            return LoadAsync(type, key, new CycleCache());
         }
 
         /// <summary>
@@ -774,99 +721,108 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="key">The key</param>
         /// <param name="cache">Cache queue</param>
         /// <returns>The instance</returns>
-        public object Load(Type type, object key, CycleCache cache)
+        public Task<object> LoadAsync(Type type, object key, CycleCache cache)
         {
-            var newType = type;
-            var assignable = false;
-            var keyIndex = -1;
+            return NewTask<object>( GetLoadMethod<object>( type, key, cache ) );
+        }
 
-            if (!TableDefinitions.ContainsKey(type))
+        private Func<TResult> GetLoadMethod<TResult>( Type type, object key, CycleCache cache ) where TResult : new()
+        {
+            return () =>
             {
-                // check if type is a base type
-                foreach (var t in TableDefinitions.Keys.Where( k => PlatformAdapter.Instance.IsAssignableFrom( type, k ) ) )
-                {
-                    assignable = true;
+                var newType = type;
+                var assignable = false;
+                var keyIndex = -1;
 
-                    lock (TableDefinitions[t])
+                if ( !TableDefinitions.ContainsKey( type ) )
+                {
+                    // check if type is a base type
+                    foreach ( var t in TableDefinitions.Keys.Where( k => PlatformAdapter.Instance.IsAssignableFrom( type, k ) ) )
                     {
-                        keyIndex = TableDefinitions[t].Keys.GetIndexForKey(key);
+                        assignable = true;
+
+                        lock ( TableDefinitions[ t ] )
+                        {
+                            keyIndex = TableDefinitions[ t ].Keys.GetIndexForKey( key );
+                        }
+
+                        if ( keyIndex < 0 ) continue;
+
+                        newType = t;
+                        break;
+                    }
+                }
+                else
+                {
+                    lock ( TableDefinitions[ newType ] )
+                    {
+                        keyIndex = TableDefinitions[ newType ].Keys.GetIndexForKey( key );
+                    }
+                }
+
+                if ( !assignable )
+                {
+                    if ( !TableDefinitions.ContainsKey( type ) )
+                    {
+                        throw new SterlingTableNotFoundException( type, Name );
+                    }
+                }
+
+                if ( keyIndex < 0 )
+                {
+                    return default( TResult );
+                }
+
+                var obj = (TResult) cache.CheckKey( newType, key );
+
+                if ( obj != null )
+                {
+                    return obj;
+                }
+
+                BinaryReader br = null;
+                MemoryStream memStream = null;
+
+                try
+                {
+                    br = Driver.Load( newType, keyIndex );
+
+                    var serializationHelper = new SerializationHelper( this, Serializer, SterlingFactory.GetLogger(),
+                                                                      s => Driver.GetTypeIndex( s ),
+                                                                      i => Driver.GetTypeAtIndex( i ) );
+                    if ( _byteInterceptorList.Count > 0 )
+                    {
+                        var bytes = br.ReadBytes( (int) br.BaseStream.Length );
+
+                        bytes = _byteInterceptorList.ToArray().Reverse().Aggregate( bytes,
+                                                                                   ( current, byteInterceptor ) =>
+                                                                                   byteInterceptor.Load( current ) );
+
+                        memStream = new MemoryStream( bytes );
+
+                        br.Dispose();
+                        br = new BinaryReader( memStream );
+                    }
+                    obj = (TResult) serializationHelper.Load( newType, key, br, cache );
+                }
+                finally
+                {
+                    if ( br != null )
+                    {
+                        br.Dispose();
                     }
 
-                    if (keyIndex < 0) continue;
-
-                    newType = t;
-                    break;
+                    if ( memStream != null )
+                    {
+                        memStream.Flush();
+                        memStream.Dispose();
+                    }
                 }
-            }
-            else
-            {
-                lock (TableDefinitions[newType])
-                {
-                    keyIndex = TableDefinitions[newType].Keys.GetIndexForKey(key);
-                }
-            }
 
-            if (!assignable)
-            {
-                if (!TableDefinitions.ContainsKey(type))
-                {
-                    throw new SterlingTableNotFoundException(type, Name);
-                }
-            }
-
-            if (keyIndex < 0)
-            {
-                return null;
-            }
-
-            var obj = cache.CheckKey(newType, key);
-
-            if (obj != null)
-            {
+                _RaiseOperation( SterlingOperation.Load, newType, key );
+              
                 return obj;
-            }
-
-            BinaryReader br = null;
-            MemoryStream memStream = null;
-
-            try
-            {
-                br = Driver.Load(newType, keyIndex);
-
-                var serializationHelper = new SerializationHelper(this, Serializer, SterlingFactory.GetLogger(),
-                                                                  s => Driver.GetTypeIndex(s),
-                                                                  i => Driver.GetTypeAtIndex(i));
-                if (_byteInterceptorList.Count > 0)
-                {
-                    var bytes = br.ReadBytes((int) br.BaseStream.Length);
-
-                    bytes = _byteInterceptorList.ToArray().Reverse().Aggregate(bytes,
-                                                                               (current, byteInterceptor) =>
-                                                                               byteInterceptor.Load(current));
-
-                    memStream = new MemoryStream(bytes);
-
-                    br.Dispose();
-                    br = new BinaryReader(memStream);
-                }
-                obj = serializationHelper.Load(newType, key, br, cache);
-            }
-            finally
-            {
-                if (br != null)
-                {
-                    br.Dispose();
-                }
-
-                if (memStream != null)
-                {
-                    memStream.Flush();
-                    memStream.Dispose();
-                }
-            }
-
-            _RaiseOperation(SterlingOperation.Load, newType, key);
-            return obj;
+            };
         }
 
         /// <summary>
@@ -874,9 +830,9 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <typeparam name="T">The type to delete</typeparam>
         /// <param name="instance">The instance</param>
-        public void Delete<T>(T instance) where T : class
+        public Task DeleteAsync<T>(T instance) where T : class
         {
-            Delete(typeof (T), TableDefinitions[typeof (T)].FetchKeyFromInstance(instance));
+            return DeleteAsync(typeof (T), TableDefinitions[typeof (T)].FetchKeyFromInstance(instance));
         }
 
         /// <summary>
@@ -884,112 +840,149 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <param name="type">The type</param>
         /// <param name="key">The key</param>
-        public void Delete(Type type, object key)
+        public Task DeleteAsync(Type type, object key)
         {
-            if (!TableDefinitions.ContainsKey(type))
+            return NewTask( () =>
             {
-                throw new SterlingTableNotFoundException(type, Name);
-            }
+                if ( !TableDefinitions.ContainsKey( type ) )
+                {
+                    throw new SterlingTableNotFoundException( type, Name );
+                }
 
-            // call any before save triggers 
-            foreach (var trigger in _TriggerList(type).Where(trigger => !trigger.BeforeDelete(type, key)))
-            {
-                throw new SterlingTriggerException(
-                    string.Format(Exceptions.Exceptions.BaseDatabaseInstance_Delete_Delete_failed_for_type, type),
-                    trigger.GetType());
-            }
+                // call any before save triggers 
+                foreach ( var trigger in _TriggerList( type ).Where( trigger => !trigger.BeforeDelete( type, key ) ) )
+                {
+                    throw new SterlingTriggerException(
+                        string.Format( Exceptions.Exceptions.BaseDatabaseInstance_Delete_Delete_failed_for_type, type ),
+                        trigger.GetType() );
+                }
 
-            var keyEntry = TableDefinitions[type].Keys.GetIndexForKey(key);
+                var keyEntry = TableDefinitions[ type ].Keys.GetIndexForKey( key );
 
-            Driver.Delete(type, keyEntry);
+                Driver.Delete( type, keyEntry );
 
-            TableDefinitions[type].Keys.RemoveKey(key);
-            foreach (var index in TableDefinitions[type].Indexes.Values)
-            {
-                index.RemoveIndex(key);
-            }
+                TableDefinitions[ type ].Keys.RemoveKey( key );
+                foreach ( var index in TableDefinitions[ type ].Indexes.Values )
+                {
+                    index.RemoveIndex( key );
+                }
 
-            _RaiseOperation(SterlingOperation.Delete, type, key);
+                _RaiseOperation( SterlingOperation.Delete, type, key );
+            } );
         }
 
         /// <summary>
         ///     Truncate all records for a type
         /// </summary>
         /// <param name="type">The type</param>
-        public void Truncate(Type type)
+        public Task TruncateAsync(Type type)
         {
-            if (_workers.Count > 0)
+            return NewTask( () =>
             {
-                throw new SterlingException(
-                    Exceptions.Exceptions.BaseDatabaseInstance_Truncate_Cannot_truncate_when_background_operations);
-            }
-
-            if (_locks == null || !_locks.ContainsKey(GetType())) return;
-
-            lock (Lock)
-            {
-                Driver.Truncate(type);
-
-                TableDefinitions[type].Keys.Truncate();
-                foreach (var index in TableDefinitions[type].Indexes.Values)
+                if ( _taskCount > 1 )
                 {
-                    index.Truncate();
+                    throw new SterlingException(
+                        Exceptions.Exceptions.BaseDatabaseInstance_Truncate_Cannot_truncate_when_background_operations );
                 }
-            }
 
-            _RaiseOperation(SterlingOperation.Truncate, type, null);
+                if ( _locks == null || !_locks.ContainsKey( GetType() ) ) return;
+
+                lock ( Lock )
+                {
+                    Driver.Truncate( type );
+
+                    TableDefinitions[ type ].Keys.Truncate();
+
+                    foreach ( var index in TableDefinitions[ type ].Indexes.Values )
+                    {
+                        index.Truncate();
+                    }
+                }
+
+                _RaiseOperation( SterlingOperation.Truncate, type, null );
+            } );
         }
 
         /// <summary>
         ///     Purge the entire database - wipe it clean!
         /// </summary>
-        public void Purge()
+        public Task PurgeAsync()
         {
-            if (_locks == null || !_locks.ContainsKey(GetType())) return;
-
-            lock (Lock)
+            return NewTask( () =>
             {
-                var tasks = new Task[ _workers.Count ];
-
-                // cancel all async operations, accumulate delays
-                lock (((ICollection) _workers).SyncRoot)
+                if ( Interlocked.Read( ref _taskCount ) > 1 )
                 {
-                    for( var i = 0; i < _workers.Count; i++ )
-                    {
-                        var worker = _workers[ i ];
+                    throw new SterlingException(
+                        Exceptions.Exceptions.BaseDatabaseInstance_Cannot_purge_when_background_operations );
+                }
 
-                        tasks[ i ] = worker.Task;
-                        worker.Cancel();
+                if ( _locks == null || !_locks.ContainsKey( GetType() ) ) return;
+
+                lock ( Lock )
+                {
+                    Driver.Purge();
+
+                    // clear key lists from memory
+                    foreach ( var table in TableDefinitions.Keys )
+                    {
+                        TableDefinitions[ table ].Keys.Truncate();
+                        foreach ( var index in TableDefinitions[ table ].Indexes.Values )
+                        {
+                            index.Truncate();
+                        }
                     }
                 }
 
-                Task.WaitAll( tasks );
-
-                Driver.Purge();
-
-                // clear key lists from memory
-                foreach (var table in TableDefinitions.Keys)
-                {
-                    TableDefinitions[table].Keys.Truncate();
-                    foreach (var index in TableDefinitions[table].Indexes.Values)
-                    {
-                        index.Truncate();
-                    }
-                }                
-            }
-
-            _RaiseOperation(SterlingOperation.Purge, GetType(), Name);
+                _RaiseOperation( SterlingOperation.Purge, GetType(), Name );
+            } );
         }
 
         /// <summary>
         ///     Refresh indexes and keys from disk
         /// </summary>
-        public void Refresh()
+        public Task RefreshAsync()
         {
-            foreach (var table in TableDefinitions)
+            return NewTask( () =>
             {
-                table.Value.Refresh();
-            }
+                foreach ( var table in TableDefinitions )
+                {
+                    table.Value.Refresh();
+                }
+            } );
+        }
+
+        private Task NewTask( Action action )
+        {
+            return Task.Factory.StartNew( () =>
+            {
+                Interlocked.Increment( ref _taskCount );
+
+                try
+                {
+                    action();
+                }
+                finally
+                {
+                    Interlocked.Decrement( ref _taskCount );
+                }
+            } );
+        }
+
+        private Task<T> NewTask<T>( Func<T> action )
+        {
+            return Task<T>.Factory.StartNew( () =>
+            {
+                Interlocked.Increment( ref _taskCount );
+
+                try
+                {
+                    return action();
+                }
+                finally
+                {
+                    Interlocked.Decrement( ref _taskCount );
+                }
+            } );
         }
 
         /// <summary>

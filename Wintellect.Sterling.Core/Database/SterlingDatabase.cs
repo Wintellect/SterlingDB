@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Exceptions;
 using Wintellect.Sterling.Core.Serialization;
 
@@ -73,6 +74,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="writer">A writer to receive the backup</param>
         public void Backup<T>(BinaryWriter writer) where T : BaseDatabaseInstance
         {
+
             _RequiresActivation();
 
             var databaseQuery = from d in _databases where d.Value.Item1.Equals(typeof (T)) select d.Value.Item2;
@@ -81,7 +83,8 @@ namespace Wintellect.Sterling.Core.Database
                 throw new SterlingDatabaseNotFoundException(typeof(T).FullName);
             }
             var database = databaseQuery.First();
-            database.Flush();
+            
+            database.FlushAsync().Wait();
 
             // first write the version
             _serializer.Serialize(_databaseVersion, writer);
@@ -145,7 +148,8 @@ namespace Wintellect.Sterling.Core.Database
                 throw new SterlingDatabaseNotFoundException(typeof (T).FullName);
             }
             var database = databaseQuery.First();
-            database.Purge();
+            
+            database.PurgeAsync().Wait();
 
             // read the version
             var version = _serializer.Deserialize<Guid>(reader);
@@ -199,11 +203,13 @@ namespace Wintellect.Sterling.Core.Database
 
                 var table1 = table;
 
-                foreach (var instance in from object key in keyDictionary.Keys select Tuple.Create(key, database.Load(table1.Key, key)))
+                foreach (var key in keyDictionary.Keys )
                 {
+                    var instance = database.LoadAsync( table1.Key, key ).Result;
+
                     foreach(var index in table.Value.Indexes)
                     {
-                        index.Value.AddIndex(instance.Item2, instance.Item1);                        
+                        index.Value.AddIndex(instance, key);                        
                     }
                 }
 

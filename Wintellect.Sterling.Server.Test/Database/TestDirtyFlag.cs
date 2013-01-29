@@ -59,26 +59,26 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<DirtyDatabase>();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestDirtyFlagFalse()
         {
             var expected = TestListModel.MakeTestListModel();
 
             // first save is to generate the keys
-            var key = _databaseInstance.Save(expected);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
 
-            var actual = _databaseInstance.Load<TestListModel>(key);
+            var actual = _databaseInstance.LoadAsync<TestListModel>( key ).Result;
 
             foreach(var model in actual.Children)
             {
@@ -89,22 +89,22 @@ namespace Wintellect.Sterling.Test.Database
             IsTestDirty = model => true;
 
             // now check that all were accessed
-            _databaseInstance.Save(actual);
+            _databaseInstance.SaveAsync( actual ).Wait();
 
             var accessed = (from t in actual.Children where !t.Accessed select 1).Any();
 
             Assert.IsFalse(accessed, "Dirty flag on save failed: some children were not accessed.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestDirtyFlagTrue()
         {
             var expected = TestListModel.MakeTestListModel();
 
             // first save is to generate the keys
-            var key = _databaseInstance.Save(expected);
+            var key = _databaseInstance.SaveAsync( expected ).Result;
 
-            var actual = _databaseInstance.Load<TestListModel>(key);
+            var actual = _databaseInstance.LoadAsync<TestListModel>( key ).Result;
 
             foreach (var model in actual.Children)
             {
@@ -115,7 +115,7 @@ namespace Wintellect.Sterling.Test.Database
             IsTestDirty = model => false;
 
             // now check that none were accessed
-            _databaseInstance.Save(actual);
+            _databaseInstance.SaveAsync( actual ).Wait();
 
             var accessed = (from t in actual.Children where t.Accessed select 1).Any();
 

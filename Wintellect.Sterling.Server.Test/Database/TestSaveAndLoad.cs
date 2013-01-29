@@ -42,42 +42,45 @@ namespace Wintellect.Sterling.Test.Database
             _engine = Factory.NewEngine();
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
             _engine.Dispose();
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveExceptions()
         {
             var raiseException = false;
             try
             {
-                _databaseInstance.Save(this);
+                _databaseInstance.SaveAsync( this ).Wait();
             }
-            catch(SterlingTableNotFoundException)
+            catch ( AggregateException ex )
             {
-                raiseException = true;
+                if ( ex.InnerExceptions.Single() is SterlingTableNotFoundException )
+                {
+                    raiseException = true;
+                }
             }
 
             Assert.IsTrue(raiseException, "Sterling did not raise exception for unknown type.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSave()
         {
             // test saving and reloading
             var expected = TestModel.MakeTestModel();
 
-            _databaseInstance.Save(expected);
+            _databaseInstance.SaveAsync( expected ).Wait();
 
-            var actual = _databaseInstance.Load<TestModel>(expected.Key);
+            var actual = _databaseInstance.LoadAsync<TestModel>( expected.Key ).Result;
 
             Assert.IsNotNull(actual, "Load failed.");
 
@@ -91,7 +94,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.SubStruct.NestedString, actual.SubStruct.NestedString, "Load failed: sub class string mismtach.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveLateBoundTable()
         {
             // test saving and reloading
@@ -99,16 +102,16 @@ namespace Wintellect.Sterling.Test.Database
 
             _databaseInstance.RegisterTableDefinition(_databaseInstance.CreateTableDefinition<TestLateBoundTable,int>(t=>t.Id));
 
-            _databaseInstance.Save(expected);
+            _databaseInstance.SaveAsync( expected ).Wait();
 
-            var actual = _databaseInstance.Load<TestLateBoundTable>(expected.Id);
+            var actual = _databaseInstance.LoadAsync<TestLateBoundTable>( expected.Id ).Result;
 
             Assert.IsNotNull(actual, "Load failed.");
 
             Assert.AreEqual(expected.Id, actual.Id, "Load failed: key mismatch.");
             Assert.AreEqual(expected.Data, actual.Data, "Load failed: data mismatch.");
 
-            _databaseInstance.Flush();
+            _databaseInstance.FlushAsync().Wait();
 
             _engine.Dispose();
             var driver = _databaseInstance.Driver;
@@ -126,7 +129,7 @@ namespace Wintellect.Sterling.Test.Database
 
             _databaseInstance.RegisterTableDefinition(_databaseInstance.CreateTableDefinition<TestLateBoundTable, int>(t => t.Id));
 
-            actual = _databaseInstance.Load<TestLateBoundTable>(expected.Id);
+            actual = _databaseInstance.LoadAsync<TestLateBoundTable>( expected.Id ).Result;
 
             Assert.IsNotNull(actual, "Load failed after restart.");
 
@@ -134,10 +137,10 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.Data, actual.Data, "Load failed: data mismatch after restart.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveShutdownReInitialize()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
 
             // test saving and reloading
             var expected1 = TestModel.MakeTestModel();
@@ -156,12 +159,12 @@ namespace Wintellect.Sterling.Test.Database
                 expectedComplex.Dict.Add(Guid.NewGuid().ToString(), Guid.NewGuid().ToString());
                 expectedComplex.Models.Add(TestModel.MakeTestModel());
             }
-            
-            _databaseInstance.Save(expected1);
-            _databaseInstance.Save(expected2);
-            _databaseInstance.Save(expectedComplex);
 
-            _databaseInstance.Flush();
+            _databaseInstance.SaveAsync( expected1 ).Wait();
+            _databaseInstance.SaveAsync( expected2 ).Wait();
+            _databaseInstance.SaveAsync( expectedComplex ).Wait();
+
+            _databaseInstance.FlushAsync().Wait();
             
             // shut it down
 
@@ -176,8 +179,8 @@ namespace Wintellect.Sterling.Test.Database
             _engine.Activate();
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(driver);
 
-            var actual1 = _databaseInstance.Load<TestModel>(expected1.Key);
-            var actual2 = _databaseInstance.Load<TestModel>(expected2.Key);
+            var actual1 = _databaseInstance.LoadAsync<TestModel>( expected1.Key ).Result;
+            var actual2 = _databaseInstance.LoadAsync<TestModel>( expected2.Key ).Result;
             
             Assert.IsNotNull(actual1, "Load failed for 1.");
             Assert.AreEqual(expected1.Key, actual1.Key, "Load failed (1): key mismatch.");
@@ -195,11 +198,11 @@ namespace Wintellect.Sterling.Test.Database
 
             //insert a third 
             var expected3 = TestModel.MakeTestModel();
-            _databaseInstance.Save(expected3);
+            _databaseInstance.SaveAsync( expected3 ).Wait();
 
-            actual1 = _databaseInstance.Load<TestModel>(expected1.Key);
-            actual2 = _databaseInstance.Load<TestModel>(expected2.Key);
-            var actual3 = _databaseInstance.Load<TestModel>(expected3.Key);
+            actual1 = _databaseInstance.LoadAsync<TestModel>( expected1.Key ).Result;
+            actual2 = _databaseInstance.LoadAsync<TestModel>( expected2.Key ).Result;
+            var actual3 = _databaseInstance.LoadAsync<TestModel>( expected3.Key ).Result;
 
             Assert.IsNotNull(actual1, "Load failed for 1.");
             Assert.AreEqual(expected1.Key, actual1.Key, "Load failed (1): key mismatch.");
@@ -220,7 +223,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected3.SubClass.NestedText, actual3.SubClass.NestedText, "Load failed (3): sub class text mismtach.");
 
             // load the complex 
-            var actualComplex = _databaseInstance.Load<TestComplexModel>(5);
+            var actualComplex = _databaseInstance.LoadAsync<TestComplexModel>( 5 ).Result;
             Assert.IsNotNull(actualComplex, "Load failed (complex): object is null.");
             Assert.AreEqual(5, actualComplex.Id, "Load failed: id mismatch.");
             Assert.IsNotNull(actualComplex.Dict, "Load failed: dictionary is null.");
@@ -245,17 +248,17 @@ namespace Wintellect.Sterling.Test.Database
 
         }
         
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveForeign()
         {
             var expected = TestAggregateModel.MakeAggregateModel();
 
-            _databaseInstance.Save(expected);
+            _databaseInstance.SaveAsync( expected ).Wait();
 
-            var actual = _databaseInstance.Load<TestAggregateModel>(expected.Key);
-            var actualTestModel = _databaseInstance.Load<TestModel>(expected.TestModelInstance.Key);
-            var actualForeignModel = _databaseInstance.Load<TestForeignModel>(expected.TestForeignInstance.Key);
-            var actualDerivedModel = _databaseInstance.Load<TestDerivedClassAModel>(expected.TestBaseClassInstance.Key);
+            var actual = _databaseInstance.LoadAsync<TestAggregateModel>( expected.Key ).Result;
+            var actualTestModel = _databaseInstance.LoadAsync<TestModel>( expected.TestModelInstance.Key ).Result;
+            var actualForeignModel = _databaseInstance.LoadAsync<TestForeignModel>( expected.TestForeignInstance.Key ).Result;
+            var actualDerivedModel = _databaseInstance.LoadAsync<TestDerivedClassAModel>( expected.TestBaseClassInstance.Key ).Result;
 
             Assert.AreEqual(expected.Key, actual.Key, "Load with foreign key failed: key mismatch.");
             Assert.AreEqual(expected.TestForeignInstance.Key, actual.TestForeignInstance.Key, "Load failed: foreign key mismatch.");
@@ -272,16 +275,16 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.TestBaseClassInstance.GetType(), actual.TestBaseClassInstance.GetType(), "Load failed: base class type mismatch.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveForeignNull()
         {
             var expected = TestAggregateModel.MakeAggregateModel();
             expected.TestForeignInstance = null;
 
-            _databaseInstance.Save(expected);
+            _databaseInstance.SaveAsync( expected ).Wait();
 
-            var actual = _databaseInstance.Load<TestAggregateModel>(expected.Key);
-            var actualTestModel = _databaseInstance.Load<TestModel>(expected.TestModelInstance.Key);
+            var actual = _databaseInstance.LoadAsync<TestAggregateModel>( expected.Key ).Result;
+            var actualTestModel = _databaseInstance.LoadAsync<TestModel>( expected.TestModelInstance.Key ).Result;
             
             Assert.AreEqual(expected.Key, actual.Key, "Load with foreign key failed: key mismatch.");
             Assert.IsNull(actual.TestForeignInstance, "Load failed: foreign key not set to null.");
@@ -291,30 +294,30 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.TestModelInstance.Data, actualTestModel.Data, "Load failed: test model data mismatch on direct load.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveAsWithBase()
         {
             var expected = new TestIndexedSubclassBase();
             expected.BaseProperty = "This is base";
             expected.Id = 1;
-            _databaseInstance.SaveAs<TestIndexedSubclassBase>(expected);
+            _databaseInstance.SaveAsAsync<TestIndexedSubclassBase>( expected ).Wait();
 
-            var actual = _databaseInstance.Load<TestIndexedSubclassBase>(expected.Id);
+            var actual = _databaseInstance.LoadAsync<TestIndexedSubclassBase>( expected.Id ).Result;
 
             Assert.AreEqual(expected.Id, actual.Id, "Save As failed: key mismatch. ");
             Assert.AreEqual(expected.BaseProperty, actual.BaseProperty, "Save As failed: base property mismatch. ");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveAsWithSubclass()
         {
             var expected = new TestIndexedSubclassModel();
             expected.BaseProperty = "This is base";
             expected.SubclassProperty = "This is subclass";
             expected.Id = 2;
-            _databaseInstance.SaveAs<TestIndexedSubclassBase>(expected);
+            _databaseInstance.SaveAsAsync<TestIndexedSubclassBase>( expected ).Wait();
 
-            var actual = _databaseInstance.Load<TestIndexedSubclassBase>(expected.Id);
+            var actual = _databaseInstance.LoadAsync<TestIndexedSubclassBase>( expected.Id ).Result;
             var actualSubclass = actual as TestIndexedSubclassModel;
 
             Assert.AreEqual(expected.Id, actual.Id, "Save As failed: key mismatch. ");
@@ -323,7 +326,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.SubclassProperty, actualSubclass.SubclassProperty, "Save As failed: Subclass property mismatch. ");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSaveAsWithInvalidSubclass()
         {
             SterlingException expectedException = null;
@@ -337,7 +340,7 @@ namespace Wintellect.Sterling.Test.Database
 
             try
             {
-                _databaseInstance.SaveAs(typeof(TestIndexedSubclassBase),expected);
+                _databaseInstance.SaveAsAsync(typeof(TestIndexedSubclassBase),expected).Wait();
             }
             catch (SterlingException ex)
             {

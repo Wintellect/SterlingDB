@@ -65,7 +65,7 @@ namespace Wintellect.Sterling.Test.Indexes
         {
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestAddIndex()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
@@ -73,7 +73,7 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestAddDuplicateIndex()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
@@ -84,7 +84,7 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.AreEqual(_target.Query.Count(), 1, "Index count is incorrect.");            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestRemoveIndex()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
@@ -95,7 +95,7 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.AreEqual(0, _target.Query.Count(), "Index was not removed.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestQueryable()
         {
             _target.AddIndex(_testModels[0],_testModels[0].Key);
@@ -107,12 +107,12 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.IsNotNull(testIndex, "Test key not retrieved.");
             Assert.AreEqual(_testModels[1].Key, testIndex.Key, "Key mismatch.");
             Assert.AreEqual(0, _testAccessCount, "Lazy loader was accessed prematurely.");
-            var testModel = testIndex.LazyValue.Value;
+            var testModel = testIndex.Value.Result;
             Assert.AreSame(_testModels[1], testModel, "Model does not match.");
             Assert.AreEqual(1, _testAccessCount, "Lazy loader access count is incorrect.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSerialization()
         {
             _target.AddIndex(_testModels[0], _testModels[0].Key);
@@ -132,7 +132,7 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.IsNotNull(testIndex, "Test index not retrieved.");
             Assert.AreEqual(_testModels[1].Key, testIndex.Key, "Key mismatch.");
             Assert.AreEqual(0, _testAccessCount, "Lazy loader was accessed prematurely.");
-            var testModel = testIndex.LazyValue.Value;
+            var testModel = testIndex.Value.Result;
             Assert.AreSame(_testModels[1], testModel, "Model does not match.");
             Assert.AreEqual(1, _testAccessCount, "Lazy loader access count is incorrect.");
 

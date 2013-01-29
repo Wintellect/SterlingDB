@@ -44,7 +44,7 @@ namespace Wintellect.Sterling.Test.Serializer
         /// <summary>
         ///     Check that serialization checks are working
         /// </summary>
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSerializationChecks()
         {
             Assert.IsTrue(_target.CanSerialize<decimal>(), "Failed to recognize decimal.");          
@@ -57,7 +57,7 @@ namespace Wintellect.Sterling.Test.Serializer
         /// <summary>
         ///     Test the serialization and deserialization
         /// </summary>
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestSerialization()
         {
             

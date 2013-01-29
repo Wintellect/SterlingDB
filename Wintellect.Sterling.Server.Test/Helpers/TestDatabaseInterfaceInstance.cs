@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Events;
@@ -133,7 +134,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <typeparam name="T">The instance type</typeparam>
         /// <typeparam name="TKey">Save it</typeparam>
         /// <param name="instance">The instance</param>
-        public TKey Save<T, TKey>(T instance) where T : class, new()
+        public Task<TKey> SaveAsync<T, TKey>(T instance) where T : class, new()
         {
             throw new NotImplementedException();
         }
@@ -183,7 +184,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <typeparam name="TKey">Save it</typeparam>
         /// <param name="instance">An instance or sub-class of the table type</param>
         /// <returns></returns>
-        public TKey SaveAs<T, TKey>(T instance) where T : class,new()
+        public Task<TKey> SaveAsAsync<T, TKey>(T instance) where T : class,new()
         {
             throw new NotImplementedException();
         }
@@ -194,7 +195,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <typeparam name="T">The table type</typeparam>
         /// <param name="instance">The instance or sub-class of the table type</param>
         /// <returns></returns>
-        public object SaveAs<T>(T instance) where T : class,new()
+        public Task<object> SaveAsAsync<T>(T instance) where T : class,new()
         {
             throw new NotImplementedException();
         }
@@ -205,7 +206,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <typeparam name="T">The type</typeparam>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        public object Save<T>(T instance) where T : class, new()
+        public Task<object> SaveAsync<T>(T instance) where T : class, new()
         {
             throw new NotImplementedException();
         }
@@ -218,7 +219,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <param name="instance">The instance</param>
         /// <param name="cache">The cycle cache</param>
         /// <returns>The key</returns>
-        public object Save(Type actualType, Type tableType, object instance, CycleCache cache)
+        public Task<object> SaveAsync(Type actualType, Type tableType, object instance, CycleCache cache)
         {
             throw new NotImplementedException();
         }
@@ -229,7 +230,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <param name="type">The type to save</param>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        public object Save(Type type, object instance)
+        public Task<object> SaveAsync(Type type, object instance)
         {
             throw new NotImplementedException();
         }
@@ -240,28 +241,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <param name="type">The table type to save against</param>
         /// <param name="instance">The instance</param>
         /// <returns>The key</returns>
-        public object SaveAs(Type type, object instance)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        ///     Save asynchronously
-        /// </summary>
-        /// <typeparam name="T">The type to save</typeparam>
-        /// <param name="list">A list of items to save</param>
-        /// <returns>A unique identifier for the batch</returns>
-        public PendingOperation SaveAsync<T>(IList<T> list)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        ///     Non-generic asynchronous save
-        /// </summary>
-        /// <param name="list">The list of items</param>
-        /// <returns>A unique job identifier</returns>
-        public PendingOperation SaveAsync(IList list)
+        public Task<object> SaveAsAsync(Type type, object instance)
         {
             throw new NotImplementedException();
         }
@@ -269,7 +249,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <summary>
         ///     Flush all keys and indexes to storage
         /// </summary>
-        public void Flush()
+        public Task FlushAsync()
         {
             throw new NotImplementedException();
         }
@@ -281,7 +261,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <typeparam name="TKey">The key type</typeparam>
         /// <param name="key">The value of the key</param>
         /// <returns>The instance</returns>
-        public T Load<T, TKey>(TKey key) where T : class, new()
+        public Task<T> LoadAsync<T, TKey>(TKey key) where T : class, new()
         {
             throw new NotImplementedException();
         }
@@ -292,7 +272,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <typeparam name="T">The type to load</typeparam>
         /// <param name="key">The key</param>
         /// <returns>The instance</returns>
-        public T Load<T>(object key) where T : class, new()
+        public Task<T> LoadAsync<T>(object key) where T : class, new()
         {
             throw new NotImplementedException();
         }
@@ -304,7 +284,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <param name="key">The key</param>
         /// <param name="cache">The cycle cache</param>
         /// <returns>The instance</returns>
-        public object Load(Type type, object key, CycleCache cache)
+        public Task<object> LoadAsync(Type type, object key, CycleCache cache)
         {
             throw new NotImplementedException();
         }
@@ -315,7 +295,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <param name="type">The type to load</param>
         /// <param name="key">The key</param>
         /// <returns>The instance</returns>
-        public object Load(Type type, object key)
+        public Task<object> LoadAsync(Type type, object key)
         {
             throw new NotImplementedException();
         }
@@ -325,7 +305,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// </summary>
         /// <typeparam name="T">The type to delete</typeparam>
         /// <param name="instance">The instance</param>
-        public void Delete<T>(T instance) where T : class
+        public Task DeleteAsync<T>(T instance) where T : class
         {
             throw new NotImplementedException();
         }
@@ -335,7 +315,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// </summary>
         /// <param name="type">The type</param>
         /// <param name="key">The key</param>
-        public void Delete(Type type, object key)
+        public Task DeleteAsync(Type type, object key)
         {
             throw new NotImplementedException();
         }
@@ -344,7 +324,7 @@ namespace Wintellect.Sterling.Test.Helpers
         ///     Truncate all records for a type
         /// </summary>
         /// <param name="type">The type</param>
-        public void Truncate(Type type)
+        public Task TruncateAsync(Type type)
         {
             throw new NotImplementedException();
         }
@@ -352,7 +332,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <summary>
         ///     Purge the entire database - wipe it clean!
         /// </summary>
-        public void Purge()
+        public Task PurgeAsync()
         {
             throw new NotImplementedException();
         }
@@ -360,7 +340,7 @@ namespace Wintellect.Sterling.Test.Helpers
         /// <summary>
         ///     Refresh indexes and keys from disk
         /// </summary>
-        public void Refresh()
+        public Task RefreshAsync()
         {
             throw new NotImplementedException();
         }

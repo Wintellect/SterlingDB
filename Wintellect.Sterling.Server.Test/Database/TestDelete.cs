@@ -30,12 +30,12 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _databaseInstance.Purge();
+            _databaseInstance.PurgeAsync().Wait();
             _engine.Dispose();
             _databaseInstance = null;            
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestDatabaseDeleteByInstance()
         {
             var testModel = TestModel.MakeTestModel();
@@ -47,26 +47,26 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(0, countKeys(),"Database initialized with invalid key count.");
             Assert.AreEqual(0, countIndex(), "Database initialized with invalid index count.");
 
-            var key = _databaseInstance.Save(testModel);
+            var key = _databaseInstance.SaveAsync(testModel).Result;
 
             Assert.AreEqual(1, countKeys(), "Keys not updated with save.");
             Assert.AreEqual(1, countIndex(), "Index count not updated with save.");
 
-            var actual = _databaseInstance.Load<TestModel>(key);
+            var actual = _databaseInstance.LoadAsync<TestModel>( key ).Result;
 
             Assert.IsNotNull(actual, "Test model did not re-load.");
 
-            _databaseInstance.Delete(actual);
+            _databaseInstance.DeleteAsync( actual ).Wait();
 
             Assert.AreEqual(0, countKeys(), "Database updated with invalid key count after delete.");
             Assert.AreEqual(0, countIndex(), "Database updated with invalid index count after delete.");
 
-            actual = _databaseInstance.Load<TestModel>(key);
+            actual = _databaseInstance.LoadAsync<TestModel>( key ).Result;
 
             Assert.IsNull(actual, "Delete failed: loaded actual value after delete.");
         }
 
-        [TestMethod]
+        [TestMethod][Timeout(1000)]
         public void TestDatabaseDeleteByKey()
         {
             var testModel = TestModel.MakeTestModel();
@@ -78,21 +78,21 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(0, countKeys(), "Database initialized with invalid key count.");
             Assert.AreEqual(0, countIndex(), "Database initialized with invalid index count.");
 
-            var key = _databaseInstance.Save(testModel);
+            var key = _databaseInstance.SaveAsync( testModel ).Result;
 
             Assert.AreEqual(1, countKeys(), "Keys not updated with save.");
             Assert.AreEqual(1, countIndex(), "Index count not updated with save.");
 
-            var actual = _databaseInstance.Load<TestModel>(key);
+            var actual = _databaseInstance.LoadAsync<TestModel>( key ).Result;
 
             Assert.IsNotNull(actual, "Test model did not re-load.");
 
-            _databaseInstance.Delete(typeof(TestModel), key);
+            _databaseInstance.DeleteAsync( typeof( TestModel ), key ).Wait();
 
             Assert.AreEqual(0, countKeys(), "Database updated with invalid key count after delete.");
             Assert.AreEqual(0, countIndex(), "Database updated with invalid index count after delete.");
 
-            actual = _databaseInstance.Load<TestModel>(key);
+            actual = _databaseInstance.LoadAsync<TestModel>( key ).Result;
 
             Assert.IsNull(actual, "Delete failed: loaded actual value after delete.");
         }
