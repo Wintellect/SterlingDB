@@ -1,11 +1,13 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 using Wintellect.Sterling.Core;
 
 namespace Wintellect.Sterling.Server
@@ -59,6 +61,11 @@ namespace Wintellect.Sterling.Server
         public void Sleep( int milliseconds )
         {
             Thread.Sleep( milliseconds );
+        }
+
+        public Tuple<Type, Action<BinaryWriter, object>, Func<BinaryReader, object>> GetBitmapSerializer()
+        {
+            return null;
         }
     }
 }

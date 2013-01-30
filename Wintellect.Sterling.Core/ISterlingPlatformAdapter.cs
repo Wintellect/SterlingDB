@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -19,5 +20,6 @@ namespace Wintellect.Sterling.Core
         MethodInfo GetSetMethod( PropertyInfo property );
         IEnumerable<Attribute> GetCustomAttributes( Type target, Type attributeType, bool inherit );
         void Sleep( int milliseconds );
+        Tuple<Type, Action<BinaryWriter, object>, Func<BinaryReader, object>> GetBitmapSerializer();
     }
 }
