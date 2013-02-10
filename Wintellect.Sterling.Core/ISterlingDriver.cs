@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Serialization;
 
@@ -30,7 +31,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">Type of the parent table</param>
         /// <param name="keyType">Type of the key</param>
         /// <param name="keyMap">Key map</param>
-        void SerializeKeys(Type type, Type keyType, IDictionary keyMap);
+        Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap);
 
         /// <summary>
         ///     Deserialize keys without generics
@@ -39,7 +40,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="keyType">Type of the key</param>
         /// <param name="template">The template</param>
         /// <returns>The keys without the template</returns>
-        IDictionary DeserializeKeys(Type type, Type keyType, IDictionary template);
+        Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary template);
 
         /// <summary>
         ///     Serialize a single index 
@@ -49,7 +50,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>
         /// <param name="indexMap">The index map</param>
-        void SerializeIndex<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap);
+        Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap);
 
         /// <summary>
         ///     Serialize a double index 
@@ -60,7 +61,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>
         /// <param name="indexMap">The index map</param>        
-        void SerializeIndex<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1,TIndex2>> indexMap);
+        Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1,TIndex2>> indexMap);
 
         /// <summary>
         ///     Deserialize a single index
@@ -70,7 +71,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>        
         /// <returns>The index map</returns>
-        Dictionary<TKey, TIndex> DeserializeIndex<TKey, TIndex>(Type type, string indexName);
+        Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName);
 
         /// <summary>
         ///     Deserialize a double index
@@ -81,7 +82,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>        
         /// <returns>The index map</returns>        
-        Dictionary<TKey, Tuple<TIndex1, TIndex2>> DeserializeIndex<TKey, TIndex1, TIndex2>(Type type, string indexName);
+        Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName);
 
         /// <summary>
         ///     Publish the list of tables
@@ -92,33 +93,33 @@ namespace Wintellect.Sterling.Core
         /// <summary>
         ///     Serialize the type master
         /// </summary>
-        void SerializeTypes();
+        Task SerializeTypesAsync();
 
         /// <summary>
         ///     Deserialize the type master
         /// </summary>
         /// <param name="types">The list of types</param>
-        void DeserializeTypes(IList<string> types);
+        Task DeserializeTypesAsync(IList<string> types);
 
         /// <summary>
         ///     Get the type master
         /// </summary>
         /// <returns></returns>
-        IList<string> GetTypes();
+        Task<IList<string>> GetTypesAsync();
 
         /// <summary>
         ///     Get the index for the type
         /// </summary>
         /// <param name="type">The type</param>
         /// <returns>The type</returns>
-        int GetTypeIndex(string type);
+        Task<int> GetTypeIndexAsync(string type);
 
         /// <summary>
         ///     Get the type at an index
         /// </summary>
         /// <param name="index">The index</param>
         /// <returns>The type</returns>
-        string GetTypeAtIndex(int index);
+        Task<string> GetTypeAtIndexAsync(int index);
 
         /// <summary>
         ///     Save operation
@@ -126,7 +127,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">Type of the parent</param>
         /// <param name="keyIndex">Index for the key</param>
         /// <param name="bytes">The byte stream</param>
-        void Save(Type type, int keyIndex, byte[] bytes);
+        Task SaveAsync(Type type, int keyIndex, byte[] bytes);
 
         /// <summary>
         ///     Load from the store
@@ -134,24 +135,24 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent</param>
         /// <param name="keyIndex">The index of the key</param>
         /// <returns>The byte stream</returns>
-        BinaryReader Load(Type type, int keyIndex);
+        Task<BinaryReader> LoadAsync(Type type, int keyIndex);
 
         /// <summary>
         ///     Delete from the store
         /// </summary>
         /// <param name="type">The type of the parent</param>
         /// <param name="keyIndex">The index of the key</param>
-        void Delete(Type type, int keyIndex);
+        Task DeleteAsync(Type type, int keyIndex);
 
         /// <summary>
         ///     Truncate a type
         /// </summary>
         /// <param name="type">The type to truncate</param>
-        void Truncate(Type type);
+        Task TruncateAsync(Type type);
 
         /// <summary>
         ///     Purge the database
         /// </summary>
-        void Purge();        
+        Task PurgeAsync();        
     }
 }

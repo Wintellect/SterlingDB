@@ -68,7 +68,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestNotNull()
         {
             var test = new NullableClass {Id = 1, Value = 1};
@@ -78,7 +78,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(test.Value, actual.Value, "Failed to load nullable with nullable set: value mismatch.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestNull()
         {
             var test = new NullableClass { Id = 1, Value = null };

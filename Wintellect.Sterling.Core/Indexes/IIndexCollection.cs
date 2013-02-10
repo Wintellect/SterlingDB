@@ -1,4 +1,5 @@
-﻿namespace Wintellect.Sterling.Core.Indexes
+﻿using System.Threading.Tasks;
+namespace Wintellect.Sterling.Core.Indexes
 {
     /// <summary>
     ///     Index collection interface
@@ -8,36 +9,36 @@
         /// <summary>
         ///     Serialize
         /// </summary>
-        void Flush();
+        Task FlushAsync();
         
         /// <summary>
         ///     Refresh the list
         /// </summary>
-        void Refresh();
+        Task RefreshAsync();
 
         /// <summary>
         ///     Truncate index
         /// </summary>
-        void Truncate();
+        Task TruncateAsync();
 
         /// <summary>
         ///     Add an index to the list
         /// </summary>
         /// <param name="instance">The instance</param>
         /// <param name="key">The related key</param>
-        void AddIndex(object instance, object key);
+        Task AddIndexAsync(object instance, object key);
 
         /// <summary>
         ///     Update the index
         /// </summary>
         /// <param name="instance">The instance</param>
         /// <param name="key">The key</param>
-        void UpdateIndex(object instance, object key);
+        Task UpdateIndexAsync(object instance, object key);
 
         /// <summary>
         ///     Remove an index from the list
         /// </summary>
         /// <param name="key">The key</param>
-        void RemoveIndex(object key);
+        Task RemoveIndexAsync(object key);
     }
 }

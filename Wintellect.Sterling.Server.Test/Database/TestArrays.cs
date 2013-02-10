@@ -37,7 +37,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestNullArray()
         {
             var expected = TestClassWithArray.MakeTestClassWithArray();
@@ -54,7 +54,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsNull(actual.ValueTypeArray, "Save/load: array should be null");            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestArray()
         {
             var expected = TestClassWithArray.MakeTestClassWithArray();

@@ -37,14 +37,14 @@ namespace Wintellect.Sterling.Core
         /// </summary>
         /// <typeparam name="T">The database type</typeparam>
         /// <param name="writer">Writer to receive the backup</param>
-        void Backup<T>(BinaryWriter writer) where T : BaseDatabaseInstance;
+        Task BackupAsync<T>(BinaryWriter writer) where T : BaseDatabaseInstance;
 
         /// <summary>
         ///     Restore the database
         /// </summary>
         /// <typeparam name="T">The database type</typeparam>
         /// <param name="reader">The stream providing the backup</param>
-        void Restore<T>(BinaryReader reader) where T : BaseDatabaseInstance;
+        Task RestoreAsync<T>(BinaryReader reader) where T : BaseDatabaseInstance;
 
         /// <summary>
         ///     Register a database type with the system

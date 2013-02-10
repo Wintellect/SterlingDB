@@ -34,8 +34,8 @@ namespace Wintellect.Sterling.Core.Database
             get
             {
                 return _serializationHelper ?? (_serializationHelper = new SerializationHelper(this, Serializer, SterlingFactory.GetLogger(),
-                                                                    s => Driver.GetTypeIndex(s),
-                                                                    i => Driver.GetTypeAtIndex(i)));
+                                                                    s => Driver.GetTypeIndexAsync(s).Result,
+                                                                    i => Driver.GetTypeAtIndexAsync(i).Result));
             }
 
         }
@@ -598,7 +598,7 @@ namespace Wintellect.Sterling.Core.Database
 
                     cache.Add( tableType, instance, key );
 
-                    keyIndex = TableDefinitions[ tableType ].Keys.AddKey( key );
+                    keyIndex = TableDefinitions[ tableType ].Keys.AddKeyAsync( key ).Result;
                 }
 
                 var memStream = new MemoryStream();
@@ -622,7 +622,7 @@ namespace Wintellect.Sterling.Core.Database
 
                         memStream.Seek( 0, SeekOrigin.Begin );
 
-                        Driver.Save( tableType, keyIndex, memStream.ToArray() );
+                        Driver.SaveAsync( tableType, keyIndex, memStream.ToArray() ).Wait();
                     }
                 }
                 finally
@@ -631,11 +631,15 @@ namespace Wintellect.Sterling.Core.Database
                     memStream.Dispose();
                 }
 
+                var idxTasks = new List<Task>();
+
                 // update the indexes
                 foreach ( var index in TableDefinitions[ tableType ].Indexes.Values )
                 {
-                    index.AddIndex( instance, key );
+                    idxTasks.Add( index.AddIndexAsync( instance, key ) );
                 }
+
+                Task.WaitAll( idxTasks.ToArray() );
 
                 // call post-save triggers
                 foreach ( var trigger in _TriggerList( tableType ) )
@@ -664,15 +668,21 @@ namespace Wintellect.Sterling.Core.Database
                 {
                     lock ( Lock )
                     {
+                        var tasks = new List<Task>();
+
                         foreach ( var def in TableDefinitions.Values )
                         {
-                            def.Keys.Flush();
+                            tasks.Add( def.Keys.FlushAsync() );
 
                             foreach ( var idx in def.Indexes.Values )
                             {
-                                idx.Flush();
+                                tasks.Add( idx.FlushAsync() );
                             }
                         }
+
+                        // can these all operate in parallel?
+
+                        Task.WaitAll( tasks.ToArray() );
                     }
 
                     _RaiseOperation( SterlingOperation.Flush, GetType(), Name );
@@ -743,7 +753,7 @@ namespace Wintellect.Sterling.Core.Database
 
                         lock ( TableDefinitions[ t ] )
                         {
-                            keyIndex = TableDefinitions[ t ].Keys.GetIndexForKey( key );
+                            keyIndex = TableDefinitions[ t ].Keys.GetIndexForKeyAsync( key ).Result;
                         }
 
                         if ( keyIndex < 0 ) continue;
@@ -756,7 +766,7 @@ namespace Wintellect.Sterling.Core.Database
                 {
                     lock ( TableDefinitions[ newType ] )
                     {
-                        keyIndex = TableDefinitions[ newType ].Keys.GetIndexForKey( key );
+                        keyIndex = TableDefinitions[ newType ].Keys.GetIndexForKeyAsync( key ).Result;
                     }
                 }
 
@@ -785,11 +795,11 @@ namespace Wintellect.Sterling.Core.Database
 
                 try
                 {
-                    br = Driver.Load( newType, keyIndex );
+                    br = Driver.LoadAsync( newType, keyIndex ).Result;
 
                     var serializationHelper = new SerializationHelper( this, Serializer, SterlingFactory.GetLogger(),
-                                                                      s => Driver.GetTypeIndex( s ),
-                                                                      i => Driver.GetTypeAtIndex( i ) );
+                                                                      s => Driver.GetTypeIndexAsync( s ).Result,
+                                                                      i => Driver.GetTypeAtIndexAsync( i ).Result );
                     if ( _byteInterceptorList.Count > 0 )
                     {
                         var bytes = br.ReadBytes( (int) br.BaseStream.Length );
@@ -857,14 +867,15 @@ namespace Wintellect.Sterling.Core.Database
                         trigger.GetType() );
                 }
 
-                var keyEntry = TableDefinitions[ type ].Keys.GetIndexForKey( key );
+                var keyEntry = TableDefinitions[ type ].Keys.GetIndexForKeyAsync( key ).Result;
 
-                Driver.Delete( type, keyEntry );
+                Driver.DeleteAsync( type, keyEntry ).Wait();
 
-                TableDefinitions[ type ].Keys.RemoveKey( key );
+                TableDefinitions[ type ].Keys.RemoveKeyAsync( key ).Wait();
+
                 foreach ( var index in TableDefinitions[ type ].Indexes.Values )
                 {
-                    index.RemoveIndex( key );
+                    index.RemoveIndexAsync( key ).Wait();
                 }
 
                 _RaiseOperation( SterlingOperation.Delete, type, key );
@@ -889,13 +900,13 @@ namespace Wintellect.Sterling.Core.Database
 
                 lock ( Lock )
                 {
-                    Driver.Truncate( type );
+                    Driver.TruncateAsync( type ).Wait();
 
-                    TableDefinitions[ type ].Keys.Truncate();
+                    TableDefinitions[ type ].Keys.TruncateAsync().Wait();
 
                     foreach ( var index in TableDefinitions[ type ].Indexes.Values )
                     {
-                        index.Truncate();
+                        index.TruncateAsync().Wait();
                     }
                 }
 
@@ -920,15 +931,16 @@ namespace Wintellect.Sterling.Core.Database
 
                 lock ( Lock )
                 {
-                    Driver.Purge();
+                    Driver.PurgeAsync().Wait();
 
                     // clear key lists from memory
                     foreach ( var table in TableDefinitions.Keys )
                     {
-                        TableDefinitions[ table ].Keys.Truncate();
+                        TableDefinitions[ table ].Keys.TruncateAsync().Wait();
+
                         foreach ( var index in TableDefinitions[ table ].Indexes.Values )
                         {
-                            index.Truncate();
+                            index.TruncateAsync().Wait();
                         }
                     }
                 }
@@ -944,10 +956,14 @@ namespace Wintellect.Sterling.Core.Database
         {
             return NewTask( () =>
             {
+                var tasks = new List<Task>();
+
                 foreach ( var table in TableDefinitions )
                 {
-                    table.Value.Refresh();
+                    tasks.Add( table.Value.RefreshAsync() );
                 }
+
+                Task.WaitAll( tasks.ToArray() );
             } );
         }
 

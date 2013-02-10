@@ -45,7 +45,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSequentialQuery()
         {
             // set up queries
@@ -61,7 +61,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(idx, _modelList.Count, "Error in query: wrong number of rows.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDescendingQuery()
         {
             var descending = from k in _databaseInstance.Query<TestModel, string, int>(TestDatabaseInstance.DATAINDEX) orderby k.Index descending select k.Key;
@@ -76,7 +76,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(idx, _modelList.Count, "Error in query: wrong number of rows.");
         }        
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestUnrolledQuery()
         {
             _modelList.Sort((m1, m2) => m1.Date.CompareTo(m2.Date));

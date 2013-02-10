@@ -36,7 +36,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestNullList()
         {
             var expected = TestAggregateListModel.MakeTestAggregateListModel();
@@ -48,7 +48,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsNull(actual.Children, "Save/load failed: list should be null.");            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestEmptyList()
         {
             var expected = TestAggregateListModel.MakeTestAggregateListModel();
@@ -61,7 +61,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(0, actual.Children.Count, "Save/load failed: list size mismatch.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestList()
         {
             var expected = TestAggregateListModel.MakeTestAggregateListModel();

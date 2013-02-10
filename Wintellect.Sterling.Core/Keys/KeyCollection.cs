@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Wintellect.Sterling.Core.Keys
 {
@@ -26,7 +27,7 @@ namespace Wintellect.Sterling.Core.Keys
         {
             _driver = driver;
             _resolver = resolver;                       
-            _DeserializeKeys();
+            _DeserializeKeysAsync().Wait(); // fix this
             IsDirty = false;        
         }        
 
@@ -45,38 +46,43 @@ namespace Wintellect.Sterling.Core.Keys
         /// </summary>
         public List<TableKey<T, TKey>> Query { get { return new List<TableKey<T, TKey>>(_keyList); } }
 
-        private void _DeserializeKeys()
+        private Task _DeserializeKeysAsync()
         {
-            _keyList.Clear();
-            _keyMap.Clear();
-
-            var keyMap = _driver.DeserializeKeys(typeof (T), typeof(TKey), new Dictionary<TKey, int>()) ?? new Dictionary<TKey, int>();
-
-            if (keyMap.Count > 0)
-            {
-                foreach (var key in keyMap.Keys)
+            return Task.Factory.StartNew( () =>
                 {
-                    var idx = (int)keyMap[key];
-                    if (idx >= NextKey)
+                    _keyList.Clear();
+                    _keyMap.Clear();
+
+                    var task = _driver.DeserializeKeysAsync( typeof( T ), typeof( TKey ), new Dictionary<TKey, int>() );
+
+                    var keyMap = task.Result ?? new Dictionary<TKey, int>();
+
+                    if ( keyMap.Count > 0 )
                     {
-                        NextKey = idx + 1;
+                        foreach ( var key in keyMap.Keys )
+                        {
+                            var idx = (int) keyMap[ key ];
+                            if ( idx >= NextKey )
+                            {
+                                NextKey = idx + 1;
+                            }
+                            _keyMap.Add( (TKey) key, idx );
+                            _keyList.Add( new TableKey<T, TKey>( (TKey) key, _resolver ) );
+                        }
                     }
-                    _keyMap.Add((TKey)key, idx);
-                    _keyList.Add(new TableKey<T, TKey>((TKey)key, _resolver));
-                }
-            }
-            else
-            {
-                NextKey = 0;
-            }            
+                    else
+                    {
+                        NextKey = 0;
+                    }
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Serializes the key list
         /// </summary>
-        private void _SerializeKeys()
+        private Task _SerializeKeysAsync()
         {
-            _driver.SerializeKeys(typeof(T), typeof(TKey), _keyMap);            
+            return Task.Factory.StartNew( () => _driver.SerializeKeysAsync( typeof( T ), typeof( TKey ), _keyMap ), TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
@@ -87,16 +93,19 @@ namespace Wintellect.Sterling.Core.Keys
         /// <summary>
         ///     Serialize
         /// </summary>
-        public void Flush()
+        public Task FlushAsync()
         {
-            lock (((ICollection)_keyList).SyncRoot)
-            {
-                if (IsDirty)
+            return Task.Factory.StartNew( () =>
                 {
-                    _SerializeKeys();
-                }
-                IsDirty = false;             
-            }
+                    lock ( ( (ICollection) _keyList ).SyncRoot )
+                    {
+                        if ( IsDirty )
+                        {
+                            _SerializeKeysAsync();
+                        }
+                        IsDirty = false;
+                    }
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
@@ -104,77 +113,92 @@ namespace Wintellect.Sterling.Core.Keys
         /// </summary>
         /// <param name="key">The key</param>
         /// <returns>The index</returns>
-        public int GetIndexForKey(object key)
+        public Task<int> GetIndexForKeyAsync(object key)
         {
-            return _keyMap.ContainsKey((TKey) key) ? _keyMap[(TKey) key] : -1; 
+            return Task.Factory.StartNew( () =>
+                {
+                    return _keyMap.ContainsKey( (TKey) key ) ? _keyMap[ (TKey) key ] : -1;
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Refresh the list
         /// </summary>
-        public void Refresh()
+        public Task RefreshAsync()
         {
-            lock (((ICollection)_keyList).SyncRoot)
-            {
-                if (IsDirty)
+            return Task.Factory.StartNew( () =>
                 {
-                    _SerializeKeys();
-                }
-                _DeserializeKeys();
-                IsDirty = false;               
-            }
+                    lock ( ( (ICollection) _keyList ).SyncRoot )
+                    {
+                        if ( IsDirty )
+                        {
+                            _SerializeKeysAsync().Wait();
+                        }
+                        _DeserializeKeysAsync().Wait();
+                        IsDirty = false;
+                    }
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Truncate the collection
         /// </summary>
-        public void Truncate()
+        public Task TruncateAsync()
         {
-            IsDirty = false;
-            Refresh();
+            return Task.Factory.StartNew( () =>
+                {
+                    IsDirty = false;
+                    RefreshAsync();
+                }, TaskCreationOptions.AttachedToParent );
         }       
 
         /// <summary>
         ///     Add a key to the list
         /// </summary>
         /// <param name="key">The key</param>
-        public int AddKey(object key)
+        public Task<int> AddKeyAsync(object key)
         {
-            lock (((ICollection)_keyList).SyncRoot)
-            {
-                var newKey = new TableKey<T, TKey>((TKey) key, _resolver);
-
-                if (!_keyList.Contains(newKey))
+            return Task.Factory.StartNew( () =>
                 {
-                    _keyList.Add(newKey);
-                    _keyMap.Add((TKey) key, NextKey++);
-                    IsDirty = true;                   
-                }
-                else
-                {
-                    var idx = _keyList.IndexOf(newKey);
-                    _keyList[idx].Refresh();
-                }
-            }
+                    lock ( ( (ICollection) _keyList ).SyncRoot )
+                    {
+                        var newKey = new TableKey<T, TKey>( (TKey) key, _resolver );
 
-            return _keyMap[(TKey)key];
+                        if ( !_keyList.Contains( newKey ) )
+                        {
+                            _keyList.Add( newKey );
+                            _keyMap.Add( (TKey) key, NextKey++ );
+                            IsDirty = true;
+                        }
+                        else
+                        {
+                            var idx = _keyList.IndexOf( newKey );
+                            _keyList[ idx ].Refresh();
+                        }
+                    }
+
+                    return _keyMap[ (TKey) key ];
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Remove a key from the list
         /// </summary>
         /// <param name="key">The key</param>
-        public void RemoveKey(object key)
+        public Task RemoveKeyAsync(object key)
         {
-            lock (((ICollection)_keyList).SyncRoot)
-            {
-                var checkKey = new TableKey<T, TKey>((TKey) key, _resolver);
+            return Task.Factory.StartNew( () =>
+                {
+                    lock ( ( (ICollection) _keyList ).SyncRoot )
+                    {
+                        var checkKey = new TableKey<T, TKey>( (TKey) key, _resolver );
 
-                if (!_keyList.Contains(checkKey)) return;
-                _keyList.Remove(checkKey);
-                _keyMap.Remove((TKey) key);
-                IsDirty = true;             
-            }
+                        if ( !_keyList.Contains( checkKey ) ) return;
+                        _keyList.Remove( checkKey );
+                        _keyMap.Remove( (TKey) key );
+                        IsDirty = true;
+                    }
+                }, TaskCreationOptions.AttachedToParent );
         }
     }
 }

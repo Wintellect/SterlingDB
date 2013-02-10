@@ -70,7 +70,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDirtyFlagFalse()
         {
             var expected = TestListModel.MakeTestListModel();
@@ -96,7 +96,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsFalse(accessed, "Dirty flag on save failed: some children were not accessed.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDirtyFlagTrue()
         {
             var expected = TestListModel.MakeTestListModel();

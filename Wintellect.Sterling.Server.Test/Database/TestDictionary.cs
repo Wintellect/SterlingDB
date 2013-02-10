@@ -36,7 +36,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestNullDictionary()
         {
             var expected = TestClassWithDictionary.MakeTestClassWithDictionary();
@@ -49,7 +49,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsNull(actual.DictionaryWithBaseClassAsValue, "Save/load failed: dictionary is not null.");            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestEmptyDictionary()
         {
             var expected = TestClassWithDictionary.MakeTestClassWithDictionary();
@@ -63,7 +63,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(0, actual.DictionaryWithBaseClassAsValue.Count, "Save/load failed: dictionary size mismatch.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDictionarySaveAndLoad()
         {
             var expected = TestClassWithDictionary.MakeTestClassWithDictionary();

@@ -40,7 +40,7 @@ namespace Wintellect.Sterling.Test.Keys
             _databaseInstance = null;            
         }       
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSave()
         {
             var random = new Random();

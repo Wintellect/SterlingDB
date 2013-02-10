@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Wintellect.Sterling.Core.Indexes
 {
@@ -49,8 +50,8 @@ namespace Wintellect.Sterling.Core.Indexes
             Name = name;
             _indexer = indexer;
             Resolver = resolver;
-            
-            DeserializeIndexes();
+
+            DeserializeIndexesAsync().Wait();   // need to fix this
 
             IsDirty = false;
         }
@@ -68,63 +69,83 @@ namespace Wintellect.Sterling.Core.Indexes
         /// <summary>
         ///     Deserialize the indexes
         /// </summary>
-        protected virtual void DeserializeIndexes()
+        protected virtual Task DeserializeIndexesAsync()
         {
-            IndexList.Clear();
-
-            foreach(var index in Driver.DeserializeIndex<TKey, TIndex>(typeof(T), Name) ?? new Dictionary<TKey, TIndex>())
+            return Task.Factory.StartNew( () =>
             {
-                IndexList.Add(new TableIndex<T, TIndex, TKey>(index.Value, index.Key, Resolver));
-            }            
+                IndexList.Clear();
+
+                var task = Driver.DeserializeIndexAsync<TKey, TIndex>( typeof( T ), Name );
+
+                foreach ( var index in task.Result ?? new Dictionary<TKey, TIndex>() )
+                {
+                    IndexList.Add( new TableIndex<T, TIndex, TKey>( index.Value, index.Key, Resolver ) );
+                }
+            }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Serializes the key list
         /// </summary>
-        protected virtual void SerializeIndexes()
+        protected virtual Task SerializeIndexesAsync()
         {
-            var dictionary = IndexList.ToDictionary(item => item.Key, item => item.Index);
-            Driver.SerializeIndex(typeof(T), Name, dictionary);                      
+            return Task.Factory.StartNew( () =>
+                {
+                    var dictionary = IndexList.ToDictionary( item => item.Key, item => item.Index );
+                    
+                    Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
+                }, TaskCreationOptions.AttachedToParent );
         }
         
         /// <summary>
         ///     Serialize
         /// </summary>
-        public void Flush()
+        public Task FlushAsync()
         {
-            lock (((ICollection)IndexList).SyncRoot)
+            return Task.Factory.StartNew( () =>
             {
-                if (IsDirty)
+                lock ( ( (ICollection) IndexList ).SyncRoot )
                 {
-                    SerializeIndexes();
+                    if ( IsDirty )
+                    {
+                        SerializeIndexesAsync();
+                    }
+                    IsDirty = false;
                 }
-                IsDirty = false;
-            }
+            }, TaskCreationOptions.AttachedToParent );
         }             
 
         /// <summary>
         ///     Refresh the list
         /// </summary>
-        public void Refresh()
+        public Task RefreshAsync()
         {
-            lock (((ICollection)IndexList).SyncRoot)
-            {
-                if (IsDirty)
+            return Task.Factory.StartNew( () =>
                 {
-                    SerializeIndexes();
-                }
-                DeserializeIndexes();
-                IsDirty = false;
-            }
+                    lock ( ( (ICollection) IndexList ).SyncRoot )
+                    {
+                        if ( IsDirty )
+                        {
+                            SerializeIndexesAsync().Wait();
+                        }
+                        
+                        DeserializeIndexesAsync().Wait();
+                        
+                        IsDirty = false;
+                    }
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Truncate index
         /// </summary>
-        public void Truncate()
+        public Task TruncateAsync()
         {
-            IsDirty = false;
-            Refresh();
+            return Task.Factory.StartNew( () =>
+            {
+                IsDirty = false;
+                RefreshAsync();
+            }, TaskCreationOptions.AttachedToParent );
         }
       
         /// <summary>
@@ -132,21 +153,24 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         /// <param name="instance">The instance</param>
         /// <param name="key">The related key</param>
-        public void AddIndex(object instance, object key)
+        public Task AddIndexAsync(object instance, object key)
         {
-            var newIndex = new TableIndex<T, TIndex, TKey>(_indexer((T)instance), (TKey)key, Resolver);
-            lock(((ICollection)IndexList).SyncRoot)
-            {               
-                if (!IndexList.Contains(newIndex))
+            return Task.Factory.StartNew( () =>
                 {
-                    IndexList.Add(newIndex);
-                }
-                else
-                {
-                    IndexList[IndexList.IndexOf(newIndex)] = newIndex;
-                }
-            }
-            IsDirty = true;
+                    var newIndex = new TableIndex<T, TIndex, TKey>( _indexer( (T) instance ), (TKey) key, Resolver );
+                    lock ( ( (ICollection) IndexList ).SyncRoot )
+                    {
+                        if ( !IndexList.Contains( newIndex ) )
+                        {
+                            IndexList.Add( newIndex );
+                        }
+                        else
+                        {
+                            IndexList[ IndexList.IndexOf( newIndex ) ] = newIndex;
+                        }
+                    }
+                    IsDirty = true;
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
@@ -154,34 +178,40 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         /// <param name="instance">The instance</param>
         /// <param name="key">The key</param>
-        public void UpdateIndex(object instance, object key)
+        public Task UpdateIndexAsync(object instance, object key)
         {
-            var index = (from i in IndexList where i.Key.Equals(key) select i).FirstOrDefault();
+            return Task.Factory.StartNew( () =>
+                {
+                    var index = ( from i in IndexList where i.Key.Equals( key ) select i ).FirstOrDefault();
 
-            if (index == null) return;
+                    if ( index == null ) return;
 
-            index.Index = _indexer((T)instance);
-            index.Refresh();
-            IsDirty = true;
+                    index.Index = _indexer( (T) instance );
+                    index.Refresh();
+                    IsDirty = true;
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
         ///     Remove an index from the list
         /// </summary>
         /// <param name="key">The key</param>
-        public void RemoveIndex(object key)
+        public Task RemoveIndexAsync(object key)
         {
-            var index = (from i in IndexList where i.Key.Equals(key) select i).FirstOrDefault();
+            return Task.Factory.StartNew( () =>
+                {
+                    var index = ( from i in IndexList where i.Key.Equals( key ) select i ).FirstOrDefault();
 
-            if (index == null) return;
-            
-            lock(((ICollection)IndexList).SyncRoot)
-            {
-                if (!IndexList.Contains(index)) return;
+                    if ( index == null ) return;
 
-                IndexList.Remove(index);
-                IsDirty = true;
-            }
+                    lock ( ( (ICollection) IndexList ).SyncRoot )
+                    {
+                        if ( !IndexList.Contains( index ) ) return;
+
+                        IndexList.Remove( index );
+                        IsDirty = true;
+                    }
+                }, TaskCreationOptions.AttachedToParent );
         }        
     }
 }

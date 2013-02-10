@@ -65,42 +65,42 @@ namespace Wintellect.Sterling.Test.Indexes
         {
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestAddIndex()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
-            _target.AddIndex(_testModels[0], _testModels[0].Key);
+            _target.AddIndexAsync(_testModels[0], _testModels[0].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestAddDuplicateIndex()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
-            _target.AddIndex(_testModels[0], _testModels[0].Key);
+            _target.AddIndexAsync(_testModels[0], _testModels[0].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");
             Assert.AreEqual(_target.Query.Count(),1, "Index count is incorrect.");
-            _target.AddIndex(_testModels[0], _testModels[0].Key);
+            _target.AddIndexAsync(_testModels[0], _testModels[0].Key).Wait();
             Assert.AreEqual(_target.Query.Count(), 1, "Index count is incorrect.");            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestRemoveIndex()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
-            _target.AddIndex(_testModels[0], _testModels[0].Key);
+            _target.AddIndexAsync(_testModels[0], _testModels[0].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");
             Assert.AreEqual(1, _target.Query.Count(), "Index count is incorrect.");
-            _target.RemoveIndex(_testModels[0].Key);
+            _target.RemoveIndexAsync(_testModels[0].Key).Wait();
             Assert.AreEqual(0, _target.Query.Count(), "Index was not removed.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestQueryable()
         {
-            _target.AddIndex(_testModels[0],_testModels[0].Key);
-            _target.AddIndex(_testModels[1], _testModels[1].Key);
-            _target.AddIndex(_testModels[2], _testModels[2].Key);
+            _target.AddIndexAsync(_testModels[0],_testModels[0].Key).Wait();
+            _target.AddIndexAsync(_testModels[1], _testModels[1].Key).Wait();
+            _target.AddIndexAsync(_testModels[2], _testModels[2].Key).Wait();
             Assert.AreEqual(3, _target.Query.Count(), "Key count is incorrect.");
             Assert.AreEqual(0, _testAccessCount, "Lazy loader was accessed prematurely.");
             var testIndex = (from k in _target.Query where k.Index.Equals(_testModels[1].Data) select k).FirstOrDefault();
@@ -112,13 +112,13 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.AreEqual(1, _testAccessCount, "Lazy loader access count is incorrect.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSerialization()
         {
-            _target.AddIndex(_testModels[0], _testModels[0].Key);
-            _target.AddIndex(_testModels[1], _testModels[1].Key);            
+            _target.AddIndexAsync(_testModels[0], _testModels[0].Key).Wait();
+            _target.AddIndexAsync(_testModels[1], _testModels[1].Key).Wait();            
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set.");
-            _target.Flush();
+            _target.FlushAsync().Wait();
             Assert.IsFalse(_target.IsDirty, "Dirty flag not reset on flush.");
 
             var secondTarget = new IndexCollection<TestModel, string, int>("TestIndex", _driver,
@@ -137,11 +137,11 @@ namespace Wintellect.Sterling.Test.Indexes
             Assert.AreEqual(1, _testAccessCount, "Lazy loader access count is incorrect.");
 
             // now let's test refresh
-            secondTarget.AddIndex(_testModels[2],_testModels[2].Key);
-            secondTarget.Flush();
+            secondTarget.AddIndexAsync(_testModels[2],_testModels[2].Key).Wait();
+            secondTarget.FlushAsync().Wait();
 
             Assert.AreEqual(2, _target.Query.Count(), "Unexpected key count in original collection.");
-            _target.Refresh();
+            _target.RefreshAsync().Wait();
             Assert.AreEqual(3, _target.Query.Count(), "Refresh failed.");
 
         }

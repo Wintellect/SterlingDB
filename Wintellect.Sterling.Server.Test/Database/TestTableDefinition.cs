@@ -52,7 +52,7 @@ namespace Wintellect.Sterling.Test.Database
                                                         _GetTestModelByKey, t => t.Key);
         }        
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestConstruction()
         {
             Assert.AreEqual(typeof(TestModel), _target.TableType, "Table type mismatch.");

@@ -72,65 +72,67 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <typeparam name="T">The database type</typeparam>
         /// <param name="writer">A writer to receive the backup</param>
-        public void Backup<T>(BinaryWriter writer) where T : BaseDatabaseInstance
+        public Task BackupAsync<T>(BinaryWriter writer) where T : BaseDatabaseInstance
         {
-
-            _RequiresActivation();
-
-            var databaseQuery = from d in _databases where d.Value.Item1.Equals(typeof (T)) select d.Value.Item2;
-            if (!databaseQuery.Any())
-            {
-                throw new SterlingDatabaseNotFoundException(typeof(T).FullName);
-            }
-            var database = databaseQuery.First();
-            
-            database.FlushAsync().Wait();
-
-            // first write the version
-            _serializer.Serialize(_databaseVersion, writer);
-
-            var typeMaster = database.Driver.GetTypes();
-
-            // now the type master
-            writer.Write(typeMaster.Count);
-            foreach(var type in typeMaster)
-            {
-                writer.Write(type);
-            }
-                        
-            // now iterate tables
-            foreach(var table in ((BaseDatabaseInstance)database).TableDefinitions)
-            {                
-                // get the key list
-                var keys = database.Driver.DeserializeKeys(table.Key, table.Value.KeyType,
-                                                           table.Value.GetNewDictionary());                                        
-                
-                // reality check
-                if (keys == null)
+            return Task.Factory.StartNew( () =>
                 {
-                    writer.Write(0);
-                }
-                else
-                {
-                    // write the count for the keys
-                    writer.Write(keys.Count);
+                    _RequiresActivation();
 
-                    // for each key, serialize it out along with the object - indexes  can be rebuilt on the flipside
-                    foreach (var key in keys.Keys)
+                    var databaseQuery = from d in _databases where d.Value.Item1.Equals( typeof( T ) ) select d.Value.Item2;
+                    if ( !databaseQuery.Any() )
                     {
-                        _serializer.Serialize(key, writer);
-                        writer.Write((int) keys[key]);
+                        throw new SterlingDatabaseNotFoundException( typeof( T ).FullName );
+                    }
+                    var database = databaseQuery.First();
 
-                        // get the instance 
-                        using (var instance = database.Driver.Load(table.Key, (int) keys[key]))
+                    database.FlushAsync().Wait();
+
+                    // first write the version
+                    _serializer.Serialize( _databaseVersion, writer );
+
+                    var typeMaster = database.Driver.GetTypesAsync().Result;
+
+                    // now the type master
+                    writer.Write( typeMaster.Count );
+                    foreach ( var type in typeMaster )
+                    {
+                        writer.Write( type );
+                    }
+
+                    // now iterate tables
+                    foreach ( var table in ( (BaseDatabaseInstance) database ).TableDefinitions )
+                    {
+                        // get the key list
+                        var keys = database.Driver.DeserializeKeysAsync( table.Key, table.Value.KeyType,
+                                                                   table.Value.GetNewDictionary() ).Result;
+
+                        // reality check
+                        if ( keys == null )
                         {
-                            var bytes = instance.ReadBytes((int) instance.BaseStream.Length);
-                            writer.Write(bytes.Length);
-                            writer.Write(bytes);
+                            writer.Write( 0 );
+                        }
+                        else
+                        {
+                            // write the count for the keys
+                            writer.Write( keys.Count );
+
+                            // for each key, serialize it out along with the object - indexes  can be rebuilt on the flipside
+                            foreach ( var key in keys.Keys )
+                            {
+                                _serializer.Serialize( key, writer );
+                                writer.Write( (int) keys[ key ] );
+
+                                // get the instance 
+                                using ( var instance = database.Driver.LoadAsync( table.Key, (int) keys[ key ] ).Result )
+                                {
+                                    var bytes = instance.ReadBytes( (int) instance.BaseStream.Length );
+                                    writer.Write( bytes.Length );
+                                    writer.Write( bytes );
+                                }
+                            }
                         }
                     }
-                }
-            }
+                } );
         }
 
         /// <summary>
@@ -138,87 +140,90 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <typeparam name="T">Type of the database</typeparam>
         /// <param name="reader">The reader with the backup information</param>
-        public void Restore<T>(BinaryReader reader) where T : BaseDatabaseInstance
+        public Task RestoreAsync<T>(BinaryReader reader) where T : BaseDatabaseInstance
         {
-            _RequiresActivation();
-
-            var databaseQuery = from d in _databases where d.Value.Item1.Equals(typeof (T)) select d.Value.Item2;
-            if (!databaseQuery.Any())
-            {
-                throw new SterlingDatabaseNotFoundException(typeof (T).FullName);
-            }
-            var database = databaseQuery.First();
-            
-            database.PurgeAsync().Wait();
-
-            // read the version
-            var version = _serializer.Deserialize<Guid>(reader);
-
-            if (!version.Equals(_databaseVersion))
-            {
-                throw new SterlingException(string.Format("Unexpected database version."));
-            }
-
-            var typeMaster = new List<string>();
-
-            var count = reader.ReadInt32();
-
-            for (var x = 0; x < count; x++)
-            {
-                typeMaster.Add(reader.ReadString());
-            }
-
-            database.Driver.DeserializeTypes(typeMaster);
-            
-            foreach (var table in ((BaseDatabaseInstance) database).TableDefinitions)
-            {
-                // make the dictionary 
-                var keyDictionary = table.Value.GetNewDictionary();
-
-                if (keyDictionary == null)
+            return Task.Factory.StartNew( () =>
                 {
-                    throw new SterlingException(string.Format("Unable to make dictionary for key type {0}",
-                                                              table.Value.KeyType));
-                }
+                    _RequiresActivation();
 
-                var keyCount = reader.ReadInt32();
-                for (var record = 0; record < keyCount; record++)
-                {
-                    var key = _serializer.Deserialize(table.Value.KeyType, reader);
-                    var keyIndex = reader.ReadInt32();
-                    keyDictionary.Add(key, keyIndex);
-
-                    var size = reader.ReadInt32();
-                    var bytes = reader.ReadBytes(size);
-                    database.Driver.Save(table.Key, keyIndex, bytes);
-                }
-
-                database.Driver.SerializeKeys(table.Key, table.Value.KeyType, keyDictionary);
-               
-                // now refresh the table
-                table.Value.Refresh();
-
-                // now generate the indexes 
-                if (table.Value.Indexes.Count <= 0) continue;
-
-                var table1 = table;
-
-                foreach (var key in keyDictionary.Keys )
-                {
-                    var instance = database.LoadAsync( table1.Key, key ).Result;
-
-                    foreach(var index in table.Value.Indexes)
+                    var databaseQuery = from d in _databases where d.Value.Item1.Equals( typeof( T ) ) select d.Value.Item2;
+                    if ( !databaseQuery.Any() )
                     {
-                        index.Value.AddIndex(instance, key);                        
+                        throw new SterlingDatabaseNotFoundException( typeof( T ).FullName );
                     }
-                }
+                    var database = databaseQuery.First();
 
-                foreach (var index in table.Value.Indexes)
-                {
-                    index.Value.Flush();
-                }
-                
-            }
+                    database.PurgeAsync().Wait();
+
+                    // read the version
+                    var version = _serializer.Deserialize<Guid>( reader );
+
+                    if ( !version.Equals( _databaseVersion ) )
+                    {
+                        throw new SterlingException( string.Format( "Unexpected database version." ) );
+                    }
+
+                    var typeMaster = new List<string>();
+
+                    var count = reader.ReadInt32();
+
+                    for ( var x = 0; x < count; x++ )
+                    {
+                        typeMaster.Add( reader.ReadString() );
+                    }
+
+                    database.Driver.DeserializeTypesAsync( typeMaster ).Wait();
+
+                    foreach ( var table in ( (BaseDatabaseInstance) database ).TableDefinitions )
+                    {
+                        // make the dictionary 
+                        var keyDictionary = table.Value.GetNewDictionary();
+
+                        if ( keyDictionary == null )
+                        {
+                            throw new SterlingException( string.Format( "Unable to make dictionary for key type {0}",
+                                                                      table.Value.KeyType ) );
+                        }
+
+                        var keyCount = reader.ReadInt32();
+                        for ( var record = 0; record < keyCount; record++ )
+                        {
+                            var key = _serializer.Deserialize( table.Value.KeyType, reader );
+                            var keyIndex = reader.ReadInt32();
+                            keyDictionary.Add( key, keyIndex );
+
+                            var size = reader.ReadInt32();
+                            var bytes = reader.ReadBytes( size );
+                            database.Driver.SaveAsync( table.Key, keyIndex, bytes ).Wait();
+                        }
+
+                        database.Driver.SerializeKeysAsync( table.Key, table.Value.KeyType, keyDictionary ).Wait();
+
+                        // now refresh the table
+                        table.Value.RefreshAsync().Wait();
+
+                        // now generate the indexes 
+                        if ( table.Value.Indexes.Count <= 0 ) continue;
+
+                        var table1 = table;
+
+                        foreach ( var key in keyDictionary.Keys )
+                        {
+                            var instance = database.LoadAsync( table1.Key, key ).Result;
+
+                            foreach ( var index in table.Value.Indexes )
+                            {
+                                index.Value.AddIndexAsync( instance, key ).Wait();
+                            }
+                        }
+
+                        foreach ( var index in table.Value.Indexes )
+                        {
+                            index.Value.FlushAsync().Wait();
+                        }
+
+                    }
+                } );
         }
 
         public ISterlingDatabaseInstance RegisterDatabase<T>() where T : BaseDatabaseInstance

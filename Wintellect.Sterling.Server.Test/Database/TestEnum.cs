@@ -82,7 +82,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestEnumSaveAndLoad()
         {
             var test = new EnumClass() { Id = 1, Value = TestEnums.Value2, ValueLong = TestEnumsLong.LongerValue };
@@ -93,7 +93,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(test.ValueLong, actual.ValueLong, "Failed to load enum: value mismatch.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestMultipleEnumSaveAndLoad()
         {
             var test1 = new EnumClass { Id = 1, Value = TestEnums.Value1, ValueLong = TestEnumsLong.LongValue };

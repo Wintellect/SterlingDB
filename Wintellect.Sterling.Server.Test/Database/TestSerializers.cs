@@ -37,7 +37,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestNullList()
         {
             var expected = TestClassWithStruct.MakeTestClassWithStruct();

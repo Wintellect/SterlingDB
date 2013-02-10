@@ -27,7 +27,7 @@ namespace Wintellect.Sterling.Test.Database
         /// <summary>
         ///     Test for a duplicate activation using different scenarios
         /// </summary>
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDuplicateActivation()
         {
             var engine1 = Factory.NewEngine();
@@ -72,7 +72,7 @@ namespace Wintellect.Sterling.Test.Database
             engine2.Dispose();            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDuplicateClass()
         {
             using (var engine = Factory.NewEngine())
@@ -96,7 +96,7 @@ namespace Wintellect.Sterling.Test.Database
             }
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestActivationNotReady()
         {
             using (var engine = Factory.NewEngine())

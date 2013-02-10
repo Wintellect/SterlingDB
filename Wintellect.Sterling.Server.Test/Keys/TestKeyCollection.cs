@@ -51,47 +51,47 @@ namespace Wintellect.Sterling.Test.Keys
                                                         _GetTestModelByKey);
         }       
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestAddKey()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
             Assert.AreEqual(0,_target.NextKey, "Next key is incorrect.");
-            _target.AddKey(_models[0].Key);
+            _target.AddKeyAsync(_models[0].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");
             Assert.AreEqual(1, _target.NextKey, "Next key not advanced.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestAddDuplicateKey()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
             Assert.AreEqual(0,_target.NextKey, "Next key is incorrect initialized.");
-            _target.AddKey(_models[0].Key);
+            _target.AddKeyAsync(_models[0].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");
             Assert.AreEqual(1, _target.NextKey, "Next key not advanced.");
-            _target.AddKey(_models[0].Key);
+            _target.AddKeyAsync(_models[0].Key).Wait();
             Assert.AreEqual(1, _target.NextKey, "Next key advanced on duplicate add."); 
             Assert.AreEqual(1, _target.Query.Count(), "Key list count is incorrect.");
         }
         
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestRemoveKey()
         {
             Assert.IsFalse(_target.IsDirty, "Dirty flag set prematurely");
             Assert.AreEqual(0, _target.NextKey, "Next key is incorrect.");
-            _target.AddKey(_models[0].Key);
+            _target.AddKeyAsync(_models[0].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set on add.");
             Assert.AreEqual(1, _target.NextKey, "Next key not advanced.");       
-            _target.RemoveKey(_models[0].Key);
+            _target.RemoveKeyAsync(_models[0].Key).Wait();
             Assert.AreEqual(0, _target.Query.Count(), "Key was not removed.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestQueryable()
         {
-            _target.AddKey(_models[0].Key);
-            _target.AddKey(_models[1].Key);
-            _target.AddKey(_models[2].Key);
+            _target.AddKeyAsync(_models[0].Key).Wait();
+            _target.AddKeyAsync(_models[1].Key).Wait();
+            _target.AddKeyAsync(_models[2].Key).Wait();
             Assert.AreEqual(3, _target.Query.Count(), "Key count is incorrect.");
             Assert.AreEqual(0, _testAccessCount, "Lazy loader was accessed prematurely.");
             var testKey = (from k in _target.Query where k.Key.Equals(_models[1].Key) select k).FirstOrDefault();
@@ -104,13 +104,13 @@ namespace Wintellect.Sterling.Test.Keys
             
         }
          
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSerialization()
         {
-            _target.AddKey(_models[0].Key);
-            _target.AddKey(_models[1].Key);
+            _target.AddKeyAsync(_models[0].Key).Wait();
+            _target.AddKeyAsync(_models[1].Key).Wait();
             Assert.IsTrue(_target.IsDirty, "Dirty flag not set.");
-            _target.Flush();
+            _target.FlushAsync().Wait();
             Assert.IsFalse(_target.IsDirty, "Dirty flag not reset on flush.");
 
             var secondTarget = new KeyCollection<TestModel, int>(_driver,
@@ -128,11 +128,11 @@ namespace Wintellect.Sterling.Test.Keys
             Assert.AreEqual(1, _testAccessCount, "Lazy loader access count is incorrect.");
 
             // now let's test refresh
-            secondTarget.AddKey(_models[2].Key);
-            secondTarget.Flush();
+            secondTarget.AddKeyAsync(_models[2].Key).Wait();
+            secondTarget.FlushAsync().Wait();
 
             Assert.AreEqual(2, _target.Query.Count(), "Unexpected key count in original collection.");
-            _target.Refresh();
+            _target.RefreshAsync().Wait();
             Assert.AreEqual(3, _target.Query.Count(), "Refresh failed.");
             
         }

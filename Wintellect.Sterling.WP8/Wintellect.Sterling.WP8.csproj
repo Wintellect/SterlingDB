@@ -89,6 +89,10 @@
     <Compile Include="..\Wintellect.Sterling.Core\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="IsolatedStorage\IsolatedStorageDriver.cs" />
+    <Compile Include="IsolatedStorage\IsoStorageHelper.cs" />
+    <Compile Include="IsolatedStorage\PathLock.cs" />
+    <Compile Include="IsolatedStorage\PathProvider.cs" />
     <Compile Include="PlatformAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

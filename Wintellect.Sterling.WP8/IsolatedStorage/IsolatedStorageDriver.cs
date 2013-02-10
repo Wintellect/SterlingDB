@@ -8,43 +8,53 @@ using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Exceptions;
 using Wintellect.Sterling.Core.Serialization;
 
-namespace Wintellect.Sterling.Server.FileSystem
+namespace Wintellect.Sterling.WP8.IsolatedStorage
 {
     /// <summary>
     ///     Default driver for isolated storage
     /// </summary>
-    public class FileSystemDriver : BaseDriver
+    public class IsolatedStorageDriver : BaseDriver
     {
-        private const string BASE = "Databases/";
+        private const string BASE = "Sterling/";
         private readonly List<Type> _tables = new List<Type>();
         private bool _dirtyType;
+        private readonly Dictionary<string,byte[]> _saveCache = new Dictionary<string, byte[]>();
         
-        public FileSystemDriver() : this(BASE)
+        public IsolatedStorageDriver() : this(BASE, false)
         {            
         }
 
-        public FileSystemDriver(string basePath) 
-        {
-            Initialize(basePath);
-        }
-       
-        public FileSystemDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : this(databaseName, serializer, log, BASE)
-        {
-        }
-        
-        public FileSystemDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log, string basePath)
-            : base(databaseName, serializer, log)
-        {
-            Initialize(basePath);
+        public IsolatedStorageDriver(string basePath) : this(basePath, false)
+        {            
         }
 
-        private FileSystemHelper _fileHelper;
+        public IsolatedStorageDriver(string basePath, bool siteWide)
+        {       
+            Initialize(basePath, siteWide);
+        }
+
+        public IsolatedStorageDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : this(databaseName, serializer, log, false)
+        {
+        }
+
+        public IsolatedStorageDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log, bool siteWide) 
+            : this(databaseName, serializer, log, siteWide, BASE)
+        {           
+        }
+
+        public IsolatedStorageDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log, bool siteWide, string basePath)
+            : base(databaseName, serializer, log)
+        {
+            Initialize(basePath, siteWide);
+        }
+
+        private IsoStorageHelper _iso;
         private string _basePath;
         private readonly PathProvider _pathProvider = new PathProvider();
 
-        public void Initialize(string basePath)
+        public void Initialize(string basePath, bool siteWide)
         {
-            _fileHelper = new FileSystemHelper();            
+            _iso = new IsoStorageHelper(siteWide);            
             _basePath = basePath; 
         }
 
@@ -57,25 +67,25 @@ namespace Wintellect.Sterling.Server.FileSystem
         public override Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
             return Task.Factory.StartNew( () =>
-            {
-                _fileHelper.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
-                var pathLock = PathLock.GetLock( type.FullName );
-                lock ( pathLock )
                 {
-                    var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
-                    using ( var keyFile = _fileHelper.GetWriter( keyPath ) )
+                    _iso.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
+                    var pathLock = PathLock.GetLock( type.FullName );
+                    lock ( pathLock )
                     {
-                        keyFile.Write( keyMap.Count );
-                        foreach ( var key in keyMap.Keys )
+                        var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+                        using ( var keyFile = _iso.GetWriter( keyPath ) )
                         {
-                            DatabaseSerializer.Serialize( key, keyFile );
-                            keyFile.Write( (int) keyMap[ key ] );
+                            keyFile.Write( keyMap.Count );
+                            foreach ( var key in keyMap.Keys )
+                            {
+                                DatabaseSerializer.Serialize( key, keyFile );
+                                keyFile.Write( (int) keyMap[ key ] );
+                            }
                         }
                     }
-                }
-
-                SerializeTypesAsync();
-            }, TaskCreationOptions.AttachedToParent );
+                    
+                    SerializeTypesAsync();
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
@@ -90,18 +100,17 @@ namespace Wintellect.Sterling.Server.FileSystem
             return Task.Factory.StartNew( () =>
                 {
                     var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
-                    if ( _fileHelper.FileExists( keyPath ) )
+                    if ( _iso.FileExists( keyPath ) )
                     {
                         var pathLock = PathLock.GetLock( type.FullName );
                         lock ( pathLock )
                         {
-                            using ( var keyFile = _fileHelper.GetReader( keyPath ) )
+                            using ( var keyFile = _iso.GetReader( keyPath ) )
                             {
                                 var count = keyFile.ReadInt32();
                                 for ( var x = 0; x < count; x++ )
                                 {
-                                    dictionary.Add( DatabaseSerializer.Deserialize( keyType, keyFile ),
-                                                   keyFile.ReadInt32() );
+                                    dictionary.Add( DatabaseSerializer.Deserialize( keyType, keyFile ), keyFile.ReadInt32() );
                                 }
                             }
                         }
@@ -126,13 +135,13 @@ namespace Wintellect.Sterling.Server.FileSystem
                     var pathLock = PathLock.GetLock( type.FullName );
                     lock ( pathLock )
                     {
-                        using ( var indexFile = _fileHelper.GetWriter( indexPath ) )
+                        using ( var indexFile = _iso.GetWriter( indexPath ) )
                         {
                             indexFile.Write( indexMap.Count );
                             foreach ( var index in indexMap )
                             {
-                                DatabaseSerializer.Serialize( index.Key, indexFile );
                                 DatabaseSerializer.Serialize( index.Value, indexFile );
+                                DatabaseSerializer.Serialize( index.Key, indexFile );
                             }
                         }
                     }
@@ -156,14 +165,14 @@ namespace Wintellect.Sterling.Server.FileSystem
                     var pathLock = PathLock.GetLock( type.FullName );
                     lock ( pathLock )
                     {
-                        using ( var indexFile = _fileHelper.GetWriter( indexPath ) )
+                        using ( var indexFile = _iso.GetWriter( indexPath ) )
                         {
                             indexFile.Write( indexMap.Count );
                             foreach ( var index in indexMap )
                             {
-                                DatabaseSerializer.Serialize( index.Key, indexFile );
                                 DatabaseSerializer.Serialize( index.Value.Item1, indexFile );
                                 DatabaseSerializer.Serialize( index.Value.Item2, indexFile );
+                                DatabaseSerializer.Serialize( index.Key, indexFile );
                             }
                         }
                     }
@@ -184,18 +193,19 @@ namespace Wintellect.Sterling.Server.FileSystem
                 {
                     var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
                     var dictionary = new Dictionary<TKey, TIndex>();
-                    if ( _fileHelper.FileExists( indexPath ) )
+                    if ( _iso.FileExists( indexPath ) )
                     {
                         var pathLock = PathLock.GetLock( type.FullName );
                         lock ( pathLock )
                         {
-                            using ( var indexFile = _fileHelper.GetReader( indexPath ) )
+                            using ( var indexFile = _iso.GetReader( indexPath ) )
                             {
                                 var count = indexFile.ReadInt32();
                                 for ( var x = 0; x < count; x++ )
                                 {
-                                    dictionary.Add( (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile ),
-                                                   (TIndex) DatabaseSerializer.Deserialize( typeof( TIndex ), indexFile ) );
+                                    var index = (TIndex) DatabaseSerializer.Deserialize( typeof( TIndex ), indexFile );
+                                    var key = (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile );
+                                    dictionary.Add( key, index );
                                 }
                             }
                         }
@@ -219,20 +229,21 @@ namespace Wintellect.Sterling.Server.FileSystem
                 {
                     var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
                     var dictionary = new Dictionary<TKey, Tuple<TIndex1, TIndex2>>();
-                    if ( _fileHelper.FileExists( indexPath ) )
+                    if ( _iso.FileExists( indexPath ) )
                     {
                         var pathLock = PathLock.GetLock( type.FullName );
                         lock ( pathLock )
                         {
-                            using ( var indexFile = _fileHelper.GetReader( indexPath ) )
+                            using ( var indexFile = _iso.GetReader( indexPath ) )
                             {
                                 var count = indexFile.ReadInt32();
                                 for ( var x = 0; x < count; x++ )
                                 {
-                                    dictionary.Add( (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile ),
-                                        Tuple.Create(
+                                    var index = Tuple.Create(
                                         (TIndex1) DatabaseSerializer.Deserialize( typeof( TIndex1 ), indexFile ),
-                                        (TIndex2) DatabaseSerializer.Deserialize( typeof( TIndex2 ), indexFile ) ) );
+                                        (TIndex2) DatabaseSerializer.Deserialize( typeof( TIndex2 ), indexFile ) );
+                                    var key = (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile );
+                                    dictionary.Add( key, index );
                                 }
                             }
                         }
@@ -247,13 +258,13 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="tables">The list of tables</param>
         public override void PublishTables(Dictionary<Type, ITableDefinition> tables)
         {
-            _fileHelper.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
+            _iso.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
 
             var typePath = _pathProvider.GetTypesPath(_basePath, DatabaseName, this);
 
-            if (!_fileHelper.FileExists(typePath)) return;
+            if (!_iso.FileExists(typePath)) return;
 
-            using (var typeFile = _fileHelper.GetReader(typePath))
+            using (var typeFile = _iso.GetReader(typePath))
             {
                 var count = typeFile.ReadInt32();
                 for (var x = 0; x < count; x++)
@@ -265,7 +276,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                         throw new SterlingTableNotFoundException(fullTypeName, DatabaseName);
                     }
 
-                    GetTypeIndexAsync( tableType.AssemblyQualifiedName ).Wait();
+                    GetTypeIndexAsync(tableType.AssemblyQualifiedName).Wait();
                 }
             }
 
@@ -275,7 +286,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                 foreach (var type in tables.Keys)
                 {
                     _tables.Add(type);
-                    _fileHelper.EnsureDirectory(_pathProvider.GetTablePath(_basePath, DatabaseName, type, this));
+                    _iso.EnsureDirectory(_pathProvider.GetTablePath(_basePath, DatabaseName, type, this));
                 }
             }
         }
@@ -291,7 +302,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                     lock ( pathLock )
                     {
                         var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseName, this );
-                        using ( var typeFile = _fileHelper.GetWriter( typePath ) )
+                        using ( var typeFile = _iso.GetWriter( typePath ) )
                         {
                             typeFile.Write( TypeIndex.Count );
                             foreach ( var type in TypeIndex )
@@ -346,8 +357,13 @@ namespace Wintellect.Sterling.Server.FileSystem
             return Task.Factory.StartNew( () =>
                 {
                     var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseName, type, this, keyIndex );
-                    _fileHelper.EnsureDirectory( instanceFolder );
+                    _iso.EnsureDirectory( instanceFolder );
                     var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+
+                    lock ( ( (ICollection) _saveCache ).SyncRoot )
+                    {
+                        _saveCache[ instancePath ] = bytes;
+                    }
 
                     // lock on this while saving, but remember that anyone else loading can now grab the
                     // copy 
@@ -355,11 +371,17 @@ namespace Wintellect.Sterling.Server.FileSystem
                     {
                         using (
                             var instanceFile =
-                                _fileHelper.GetWriter( instancePath ) )
+                                _iso.GetWriter( instancePath ) )
                         {
                             instanceFile.Write( bytes );
-                            instanceFile.Flush();
-                            instanceFile.Close();
+                        }
+
+                        lock ( ( (ICollection) _saveCache ).SyncRoot )
+                        {
+                            if ( _saveCache.ContainsKey( instancePath ) )
+                            {
+                                _saveCache.Remove( instancePath );
+                            }
                         }
                     }
 
@@ -383,11 +405,20 @@ namespace Wintellect.Sterling.Server.FileSystem
                 {
                     var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
 
+                    // if a copy is available, return that - it's our best bet
+                    lock ( ( (ICollection) _saveCache ).SyncRoot )
+                    {
+                        if ( _saveCache.ContainsKey( instancePath ) )
+                        {
+                            return new BinaryReader( new MemoryStream( _saveCache[ instancePath ] ) );
+                        }
+                    }
+
                     // otherwise let's wait for it to be released and grab it from disk
                     lock ( PathLock.GetLock( instancePath ) )
                     {
-                        return _fileHelper.FileExists( instancePath )
-                                   ? _fileHelper.GetReader( instancePath )
+                        return _iso.FileExists( instancePath )
+                                   ? _iso.GetReader( instancePath )
                                    : new BinaryReader( new MemoryStream() );
                     }
                 }, TaskCreationOptions.AttachedToParent );
@@ -405,9 +436,9 @@ namespace Wintellect.Sterling.Server.FileSystem
                     var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
                     lock ( PathLock.GetLock( instancePath ) )
                     {
-                        if ( _fileHelper.FileExists( instancePath ) )
+                        if ( _iso.FileExists( instancePath ) )
                         {
-                            _fileHelper.Delete( instancePath );
+                            _iso.Delete( instancePath );
                         }
                     }
                 }, TaskCreationOptions.AttachedToParent );
@@ -424,7 +455,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                     var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseName, type, this );
                     lock ( PathLock.GetLock( type.FullName ) )
                     {
-                        _fileHelper.Purge( folderPath );
+                        _iso.Purge( folderPath );
                     }
                 }, TaskCreationOptions.AttachedToParent );
         }
@@ -438,7 +469,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                 {
                     lock ( PathLock.GetLock( DatabaseName ) )
                     {
-                        _fileHelper.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseName, this ) );
+                        _iso.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseName, this ) );
                     }
                 }, TaskCreationOptions.AttachedToParent );
         }        

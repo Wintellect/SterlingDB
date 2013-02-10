@@ -39,7 +39,7 @@ namespace Wintellect.Sterling.Test.Keys
         }
        
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSave()
         {
             const int LISTSIZE = 20;

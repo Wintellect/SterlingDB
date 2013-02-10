@@ -53,7 +53,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveExceptions()
         {
             var raiseException = false;
@@ -72,7 +72,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsTrue(raiseException, "Sterling did not raise exception for unknown type.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSave()
         {
             // test saving and reloading
@@ -94,7 +94,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.SubStruct.NestedString, actual.SubStruct.NestedString, "Load failed: sub class string mismtach.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveLateBoundTable()
         {
             // test saving and reloading
@@ -137,7 +137,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.Data, actual.Data, "Load failed: data mismatch after restart.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveShutdownReInitialize()
         {
             _databaseInstance.PurgeAsync().Wait();
@@ -248,7 +248,7 @@ namespace Wintellect.Sterling.Test.Database
 
         }
         
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveForeign()
         {
             var expected = TestAggregateModel.MakeAggregateModel();
@@ -275,7 +275,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.TestBaseClassInstance.GetType(), actual.TestBaseClassInstance.GetType(), "Load failed: base class type mismatch.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveForeignNull()
         {
             var expected = TestAggregateModel.MakeAggregateModel();
@@ -294,7 +294,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.TestModelInstance.Data, actualTestModel.Data, "Load failed: test model data mismatch on direct load.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveAsWithBase()
         {
             var expected = new TestIndexedSubclassBase();
@@ -308,7 +308,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.BaseProperty, actual.BaseProperty, "Save As failed: base property mismatch. ");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveAsWithSubclass()
         {
             var expected = new TestIndexedSubclassModel();
@@ -326,7 +326,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(expected.SubclassProperty, actualSubclass.SubclassProperty, "Save As failed: Subclass property mismatch. ");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSaveAsWithInvalidSubclass()
         {
             SterlingException expectedException = null;

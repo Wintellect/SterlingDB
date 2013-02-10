@@ -20,7 +20,7 @@ namespace Wintellect.Sterling.Test.Keys
     [TestClass]
     public class TestTableKey
     {
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestTableKeyFunctionality()
         {
             var list = new[] {TestModel.MakeTestModel(), TestModel.MakeTestModel()};

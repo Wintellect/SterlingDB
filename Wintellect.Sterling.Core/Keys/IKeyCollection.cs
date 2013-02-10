@@ -1,4 +1,5 @@
-﻿namespace Wintellect.Sterling.Core.Keys
+﻿using System.Threading.Tasks;
+namespace Wintellect.Sterling.Core.Keys
 {
     /// <summary>
     ///     Key collection interface
@@ -8,35 +9,35 @@
         /// <summary>
         ///     Serialize
         /// </summary>
-        void Flush();
+        Task FlushAsync();
 
         /// <summary>
         ///     Get the index for a key
         /// </summary>
         /// <param name="key">The key</param>
         /// <returns>The index</returns>
-        int GetIndexForKey(object key);
+        Task<int> GetIndexForKeyAsync(object key);
 
         /// <summary>
         ///     Refresh the list
         /// </summary>
-        void Refresh();
+        Task RefreshAsync();
 
         /// <summary>
         ///     Truncate the collection
         /// </summary>
-        void Truncate();
+        Task TruncateAsync();
 
         /// <summary>
         ///     Add a key to the list
         /// </summary>
         /// <param name="key">The key</param>
-        int AddKey(object key);
+        Task<int> AddKeyAsync(object key);
 
         /// <summary>
         ///     Remove a key from the list
         /// </summary>
         /// <param name="key">The key</param>
-        void RemoveKey(object key);
+        Task RemoveKeyAsync(object key);
     }
 }

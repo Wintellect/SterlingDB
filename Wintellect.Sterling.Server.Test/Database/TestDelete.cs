@@ -35,7 +35,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDatabaseDeleteByInstance()
         {
             var testModel = TestModel.MakeTestModel();
@@ -66,7 +66,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsNull(actual, "Delete failed: loaded actual value after delete.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDatabaseDeleteByKey()
         {
             var testModel = TestModel.MakeTestModel();

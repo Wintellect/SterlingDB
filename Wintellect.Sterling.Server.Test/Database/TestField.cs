@@ -52,7 +52,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance.PurgeAsync().Wait();
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestData()
         {
             var testNull = new TestObjectField {Key = 1, Data = "data"};

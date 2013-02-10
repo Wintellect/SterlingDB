@@ -45,7 +45,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSequentialQuery()
         {           
             // set up queries
@@ -58,7 +58,7 @@ namespace Wintellect.Sterling.Test.Database
             }
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDescendingQuery()
         {             
             var descending = from k in _databaseInstance.Query<TestModel, int>() orderby k.Key descending select k.Key;
@@ -70,7 +70,7 @@ namespace Wintellect.Sterling.Test.Database
             }                   
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestRangeQuery()
         {           
             var range = from k in _databaseInstance.Query<TestModel, int>()
@@ -85,7 +85,7 @@ namespace Wintellect.Sterling.Test.Database
             }
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestUnrolledQuery()
         {            
             _modelList.Sort((m1, m2) => m1.Data.CompareTo(m2.Data));

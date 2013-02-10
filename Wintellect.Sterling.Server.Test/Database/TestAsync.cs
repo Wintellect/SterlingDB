@@ -82,7 +82,7 @@ namespace Wintellect.Sterling.Test.Database
 
 //#if SILVERLIGHT
 //        [Asynchronous]
-//        [TestMethod][Timeout(1000)]
+//        [TestMethod]
 //        public void TestSave()
 //        {
 //            var grid = new Grid();
@@ -116,7 +116,7 @@ namespace Wintellect.Sterling.Test.Database
 //        }
 
 //        [Asynchronous]
-//        [TestMethod][Timeout(1000)]
+//        [TestMethod]
 //        public void TestSaveNoProgress()
 //        {
 //            var grid = new Grid();
@@ -143,7 +143,7 @@ namespace Wintellect.Sterling.Test.Database
 //        }
 
 //        [Asynchronous]
-//        [TestMethod][Timeout(1000)]
+//        [TestMethod]
 //        public void TestSaveWithCancel()
 //        {
 //            var grid = new Grid();
@@ -186,7 +186,7 @@ namespace Wintellect.Sterling.Test.Database
         [Asynchronous]
         [Tag("Concurrent")]
 #endif
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestConcurrentSaveAndLoad()
         {
             var saveEvent = new ManualResetEvent(false);
@@ -268,7 +268,7 @@ namespace Wintellect.Sterling.Test.Database
         [Asynchronous]
         [Tag("Concurrent")]
 #endif
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestConcurrentSaveAndLoadWithIndex()
         {
             var saveEvent = new ManualResetEvent(false);

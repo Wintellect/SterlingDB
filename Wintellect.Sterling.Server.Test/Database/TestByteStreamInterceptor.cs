@@ -100,7 +100,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance.PurgeAsync().Wait();
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestData()
         {
             const string DATA = "Data to be intercepted";

@@ -86,7 +86,7 @@ namespace Wintellect.Sterling.Test.Database
             _database = null;
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestAddBill()
         {
             _database.PurgeAsync().Wait();

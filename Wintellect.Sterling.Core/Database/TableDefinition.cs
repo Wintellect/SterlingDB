@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Exceptions;
 using Wintellect.Sterling.Core.Indexes;
 using Wintellect.Sterling.Core.Keys;
@@ -122,14 +123,17 @@ namespace Wintellect.Sterling.Core.Database
         /// <summary>
         ///     Refresh key list
         /// </summary>
-        public void Refresh()
+        public Task RefreshAsync()
         {
-            KeyList.Refresh();
-            
-            foreach(var index in Indexes.Values)
+            return Task.Factory.StartNew( () =>
             {
-                index.Refresh();               
-            }
+                KeyList.RefreshAsync().Wait();
+
+                foreach ( var index in Indexes.Values )
+                {
+                    index.RefreshAsync().Wait();
+                }
+            }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>

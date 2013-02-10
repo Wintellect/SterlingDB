@@ -65,7 +65,7 @@
 //        }
 
 //        [Asynchronous]
-//        [TestMethod][Timeout(1000)]
+//        [TestMethod]
 //        public void TestImageSaveAndRestore()
 //        {
 //            var grid = new Grid();

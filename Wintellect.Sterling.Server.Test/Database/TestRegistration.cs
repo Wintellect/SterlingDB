@@ -18,7 +18,7 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestRegistration
     {        
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestDatabaseRegistration()
         {
             using (var engine = Factory.NewEngine())

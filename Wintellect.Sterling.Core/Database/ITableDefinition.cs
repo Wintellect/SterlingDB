@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Indexes;
 using Wintellect.Sterling.Core.Keys;
 
@@ -40,7 +41,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <summary>
         ///     Refresh key list
         /// </summary>
-        void Refresh();
+        Task RefreshAsync();
 
         /// <summary>
         ///     Fetch the key for the instance

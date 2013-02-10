@@ -149,7 +149,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestTriggerBeforeSaveWithSuccess()
         {
             var key1 = _databaseInstance.SaveAsync<TriggerClass, int>( new TriggerClass { Data = Guid.NewGuid().ToString() } ).Result;
@@ -159,7 +159,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsTrue(key2 - key1 == 1, "Save failed: second key isn't one greater than first key.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestTriggerBeforeSaveWithFailure()
         {
             var handled = false;
@@ -182,7 +182,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsNull(actual, "Trigger failed: instance was saved.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestTriggerOnChildren()
         {
             var trigger = new TriggerListTestTrigger(100);
@@ -208,7 +208,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance.UnregisterTrigger(trigger);
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestTriggerAfterSave()
         {
             var target = new TriggerClass {Data = Guid.NewGuid().ToString(), IsDirty = true};
@@ -216,7 +216,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.IsFalse(target.IsDirty, "Trigger failed: is dirty flag was not reset.");
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestTriggerBeforeDelete()
         {
             var instance1 = new TriggerClass {Data = Guid.NewGuid().ToString()};

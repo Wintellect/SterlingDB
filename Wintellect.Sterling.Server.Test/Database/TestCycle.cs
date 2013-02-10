@@ -69,7 +69,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestCycleNegativeCase()
         {
             var test = new CycleClass { Id = 1, Value = 1 };
@@ -89,7 +89,7 @@ namespace Wintellect.Sterling.Test.Database
             Assert.AreEqual(child.Value, actual.Value, "Failed to load cycle with non-null child: value mismatch on direct child load.");            
         }
 
-        [TestMethod][Timeout(1000)] 
+        [TestMethod] 
         public void TestCyclePositiveCase()
         {
             var test = new CycleClass { Id = 1, Value = 1 };

@@ -172,7 +172,7 @@ namespace Wintellect.Sterling.Test.Serializer
         ///     Test the serializer by creating a typically non-supported class and processing with
         ///     the custom serializer
         /// </summary>
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestCustomSaveAndLoad()
         {
             var expectedList = new[] {TestModel.MakeTestModel(), TestModel.MakeTestModel(), TestModel.MakeTestModel()};

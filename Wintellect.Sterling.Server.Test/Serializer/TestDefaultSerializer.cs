@@ -41,7 +41,7 @@ namespace Wintellect.Sterling.Test.Serializer
         /// <summary>
         ///     Check that serialization checks are working
         /// </summary>
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSerializationChecks()
         {
             Assert.IsTrue(_target.CanSerialize<int>(), "Failed to recognize integer.");
@@ -53,7 +53,7 @@ namespace Wintellect.Sterling.Test.Serializer
         /// <summary>
         ///     Test the serialization and deserialization
         /// </summary>
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestSerialization()
         {
             var charArray = TEST_STRING.ToCharArray();

@@ -31,7 +31,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = null;            
         }
 
-        [TestMethod][Timeout(1000)]
+        [TestMethod]
         public void TestBackupAndRestore()
         {
             if (_driver == null)
@@ -56,7 +56,7 @@ namespace Wintellect.Sterling.Test.Database
 
             using (var binaryWriter = new BinaryWriter(memStream))
             {
-                _engine.SterlingDatabase.Backup<TestDatabaseInstance>(binaryWriter);
+                _engine.SterlingDatabase.BackupAsync<TestDatabaseInstance>(binaryWriter).Wait();
                 binaryWriter.Flush();
                 databaseBuffer = memStream.ToArray();
             }
@@ -83,7 +83,7 @@ namespace Wintellect.Sterling.Test.Database
             _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);
 
             // restore it
-            _engine.SterlingDatabase.Restore<TestDatabaseInstance>(new BinaryReader(new MemoryStream(databaseBuffer)));
+            _engine.SterlingDatabase.RestoreAsync<TestDatabaseInstance>(new BinaryReader(new MemoryStream(databaseBuffer))).Wait();
 
             _engine.Dispose();
             _engine = null;
