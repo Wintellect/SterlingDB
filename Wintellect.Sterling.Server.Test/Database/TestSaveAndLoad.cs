@@ -7,12 +7,14 @@ using Microsoft.Phone.Testing;
 #endif
 #if NETFX_CORE
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using Wintellect.Sterling.WinRT.WindowsStorage;
 #else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Exceptions;
 using Wintellect.Sterling.Test.Helpers;
+using System.Threading.Tasks;
 
 namespace Wintellect.Sterling.Test.Database
 {    
@@ -48,25 +50,22 @@ namespace Wintellect.Sterling.Test.Database
         [TestCleanup]
         public void TestCleanup()
         {
-            _engine.Dispose();
             _databaseInstance.PurgeAsync().Wait();
-            _databaseInstance = null;            
+            _engine.Dispose();
+            _databaseInstance = null;
         }
 
         [TestMethod]
-        public void TestSaveExceptions()
+        public async Task TestSaveExceptions()
         {
             var raiseException = false;
             try
             {
-                _databaseInstance.SaveAsync( this ).Wait();
+                await _databaseInstance.SaveAsync( this );
             }
-            catch ( AggregateException ex )
+            catch ( SterlingTableNotFoundException )
             {
-                if ( ex.InnerExceptions.Single() is SterlingTableNotFoundException )
-                {
-                    raiseException = true;
-                }
+                raiseException = true;
             }
 
             Assert.IsTrue(raiseException, "Sterling did not raise exception for unknown type.");

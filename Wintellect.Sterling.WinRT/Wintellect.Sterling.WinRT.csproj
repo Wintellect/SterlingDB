@@ -114,6 +114,10 @@
     </Compile>
     <Compile Include="PlatformAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WindowsStorage\WindowsStorageDriver.cs" />
+    <Compile Include="WindowsStorage\PathLock.cs" />
+    <Compile Include="WindowsStorage\PathProvider.cs" />
+    <Compile Include="WindowsStorage\StorageHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.snk">
