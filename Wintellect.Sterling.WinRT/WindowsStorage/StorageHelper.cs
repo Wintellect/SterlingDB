@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -213,34 +214,6 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             }
         }
 
-        public static async Task<T> ReadFileAsync<T>( string path, StorageStrategies location = StorageStrategies.Local )
-        {
-            // fetch file
-            StorageFile file = null;
-
-            switch ( location )
-            {
-                case StorageStrategies.Roaming:
-                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.RoamingFolder );
-                    break;
-
-                case StorageStrategies.Temporary:
-                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.TemporaryFolder );
-                    break;
-
-                default:
-                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.LocalFolder );
-                    break;
-            }
-
-            if ( file == null )
-                return default( T );
-            // read content
-            var s = await FileIO.ReadTextAsync( file );
-            // convert to obj
-            return Deserialize<T>( s );
-        }
-
         public static async Task<BinaryReader> GetReaderForFileAsync( string path, StorageStrategies location = StorageStrategies.Local )
         {
             switch ( location )
@@ -289,34 +262,6 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             return new BinaryWriter( stream );
         }
 
-        public static async Task<bool> WriteFileAsync<T>( string path, T value, StorageStrategies location = StorageStrategies.Local )
-        {
-            // create file
-            StorageFile file = null;
-
-            switch ( location )
-            {
-                case StorageStrategies.Roaming:
-                    file = await CreateFileAsync( path, ApplicationData.Current.RoamingFolder );
-                    break;
-
-                case StorageStrategies.Temporary:
-                    file = await CreateFileAsync( path, ApplicationData.Current.TemporaryFolder );
-                    break;
-
-                default:
-                    file = await CreateFileAsync( path, ApplicationData.Current.LocalFolder );
-                    break;
-            }
-
-            // convert to string
-            var s = Serialize( value );
-            // save string to file
-            await FileIO.WriteTextAsync( file, s );
-            // result
-            return await FileExistsAsync( path, location );
-        }
-
         private static async Task<StorageFile> CreateFileAsync( string path, StorageFolder folder, CreationCollisionOption option = CreationCollisionOption.OpenIfExists )
         {
             var parts = path.Split( '/' );
@@ -331,7 +276,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             return await folder.CreateFileAsync( fileName, option );
         }
 
-        private static async Task<StorageFile> GetIfFileExistsAsync( string path, StorageFolder folder, CreationCollisionOption option = CreationCollisionOption.FailIfExists )
+        private static async Task<StorageFile> GetIfFileExistsAsync( string path, StorageFolder folder )
         {
             var parts = path.Split( '/' );
 
@@ -359,34 +304,22 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
         public static string Serialize( object objectToSerialize )
         {
-            using ( var strm = new System.IO.MemoryStream() )
+            using ( var strm = new MemoryStream() )
             {
-                try
-                {
-                    var ser = new System.Runtime.Serialization.Json.DataContractJsonSerializer( objectToSerialize.GetType() );
-                    ser.WriteObject( strm, objectToSerialize );
-                    strm.Position = 0;
-                    var rdr = new System.IO.StreamReader( strm );
-                    return rdr.ReadToEnd();
-                }
-                catch ( Exception e )
-                {
-                    System.Diagnostics.Debug.WriteLine( "Serialize:" + e.Message );
-                    return string.Empty;
-                }
+                var ser = new DataContractJsonSerializer( objectToSerialize.GetType() );
+                ser.WriteObject( strm, objectToSerialize );
+                strm.Position = 0;
+                var rdr = new StreamReader( strm );
+                return rdr.ReadToEnd();
             }
         }
 
         public static T Deserialize<T>( string jsonString )
         {
-            using ( var strm = new System.IO.MemoryStream( Encoding.Unicode.GetBytes( jsonString ) ) )
+            using ( var strm = new MemoryStream( Encoding.Unicode.GetBytes( jsonString ) ) )
             {
-                try
-                {
-                    var ser = new System.Runtime.Serialization.Json.DataContractJsonSerializer( typeof( T ) );
-                    return (T) ser.ReadObject( strm );
-                }
-                catch ( Exception ) { throw; }
+                var ser = new DataContractJsonSerializer( typeof( T ) );
+                return (T) ser.ReadObject( strm );
             }
         }
 

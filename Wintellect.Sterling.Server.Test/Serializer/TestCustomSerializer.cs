@@ -1,16 +1,22 @@
+
+#if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+#else
+using Wintellect.Sterling.Server.FileSystem;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+#endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
-#if NETFX_CORE
-using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
-#else
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Serialization;
@@ -132,6 +138,25 @@ namespace Wintellect.Sterling.Test.Serializer
     }
 
 #if SILVERLIGHT
+    [Tag("Custom")]
+    [Tag("Serializer")]
+#endif
+    [TestClass]
+    public class TestCustomSerializerAltDriver : TestCustomSerializer
+    {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver();
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver();
+#else
+            return new FileSystemDriver();
+#endif
+        }
+    }
+
+#if SILVERLIGHT
     /// <summary>
     ///     Test for custom serialization
     /// </summary>
@@ -139,7 +164,7 @@ namespace Wintellect.Sterling.Test.Serializer
     [Tag("Serializer")]
 #endif
     [TestClass]
-    public class TestCustomSerializer
+    public class TestCustomSerializer : TestBase
     {
         private SterlingEngine _engine;
         public static ISterlingDatabaseInstance DatabaseInstance;
@@ -153,7 +178,7 @@ namespace Wintellect.Sterling.Test.Serializer
             _engine = Factory.NewEngine();
             _engine.SterlingDatabase.RegisterSerializer<SupportSerializer>();            
             _engine.Activate();
-            DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>();
+            DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>( GetDriver() );
             DatabaseInstance.PurgeAsync().Wait();
         }
 

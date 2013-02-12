@@ -1,12 +1,20 @@
-﻿using System.Linq;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
+﻿
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using System;
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
+using System;
+using System.Linq;
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Serialization;
@@ -18,8 +26,44 @@ namespace Wintellect.Sterling.Test.Database
     [Tag("TableDefinition")]
 #endif
     [TestClass]
-    public class TestTableDefinition
+    public class TestTableDefinitionAltDriver : TestTableDefinition
     {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver();
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver();
+#else
+            return new FileSystemDriver();
+#endif
+        }
+
+        protected override ISterlingDriver GetDriver( string databaseName, ISterlingSerializer serializer,
+                                                      Action<SterlingLogLevel, string, Exception> log )
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver( databaseName, serializer, log );
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver( databaseName, serializer, log );
+#else
+            return new FileSystemDriver( databaseName, serializer, log );
+#endif
+        }
+    }
+
+#if SILVERLIGHT
+    [Tag("TableDefinition")]
+#endif
+    [TestClass]
+    public class TestTableDefinition : TestBase
+    {
+        protected virtual ISterlingDriver GetDriver( string databaseName, ISterlingSerializer serializer,
+                                                     Action<SterlingLogLevel, string, Exception> log )
+        {
+            return new MemoryDriver( databaseName, serializer, log );
+        }
+
         private readonly TestModel[] _models = new[]
                                           {
                                               TestModel.MakeTestModel(), TestModel.MakeTestModel(),
@@ -48,7 +92,7 @@ namespace Wintellect.Sterling.Test.Database
             serializer.AddSerializer(new DefaultSerializer());
             serializer.AddSerializer(new ExtendedSerializer());
             _testAccessCount = 0;
-            _target = new TableDefinition<TestModel, int>(new MemoryDriver(_testDatabase.Name, serializer, SterlingFactory.GetLogger().Log),
+            _target = new TableDefinition<TestModel, int>(GetDriver(_testDatabase.Name, serializer, SterlingFactory.GetLogger().Log),
                                                         _GetTestModelByKey, t => t.Key);
         }        
 

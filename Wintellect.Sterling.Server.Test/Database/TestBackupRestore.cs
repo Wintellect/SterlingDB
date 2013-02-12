@@ -1,12 +1,18 @@
-using System.IO;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
+
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
+using System.IO;
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Test.Helpers;
 
@@ -17,11 +23,30 @@ namespace Wintellect.Sterling.Test.Database
     [Tag("Database")]
 #endif
     [TestClass]
-    public class TestBackupRestore
+    public class TestBackupRestoreAltDriver : TestBackupRestore
+    {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver();
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver();
+#else
+            return new FileSystemDriver();
+#endif
+        }
+    }
+
+#if SILVERLIGHT
+    [Tag("Backup")]
+    [Tag("Database")]
+#endif
+    [TestClass]
+    public class TestBackupRestore : TestBase
     {
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _databaseInstance;
-        private MemoryDriver _driver;
+        private ISterlingDriver _driver;
 
         [TestCleanup]
         public void TestCleanup()
@@ -36,7 +61,7 @@ namespace Wintellect.Sterling.Test.Database
         {
             if (_driver == null)
             {
-                _driver = new MemoryDriver();
+                _driver = GetDriver();
             }
 
             // activate the engine and store the data

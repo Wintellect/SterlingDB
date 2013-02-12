@@ -23,19 +23,6 @@ namespace Wintellect.Sterling.Test.WindowsStorage
         }
 
         [TestMethod]
-        public void TestReadWriteTextFile()
-        {
-            var obj = new MyClass { Name = "Fred", Age = 34 };
-
-            StorageHelper.WriteFileAsync( "fred.txt", obj ).Wait();
-
-            var obj2 = StorageHelper.ReadFileAsync<MyClass>( "fred.txt" ).Result;
-
-            Assert.AreEqual( obj.Name, obj2.Name );
-            Assert.AreEqual( obj.Age, obj2.Age );
-        }
-
-        [TestMethod]
         public void TestReadWriteBinaryFile()
         {
             var obj = new MyClass { Name = "Joe", Age = 87 };

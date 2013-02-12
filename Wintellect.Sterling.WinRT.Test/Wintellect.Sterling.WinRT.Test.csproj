@@ -293,6 +293,9 @@
     <Compile Include="..\Wintellect.Sterling.Server.Test\Serializer\TestExtendedSerializer.cs">
       <Link>Serializer\TestExtendedSerializer.cs</Link>
     </Compile>
+    <Compile Include="..\Wintellect.Sterling.Server.Test\TestBase.cs">
+      <Link>TestBase.cs</Link>
+    </Compile>
     <Compile Include="EngineFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WindowsStorage\TestStorageHelper.cs" />

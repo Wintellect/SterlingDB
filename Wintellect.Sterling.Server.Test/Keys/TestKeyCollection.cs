@@ -1,12 +1,18 @@
-﻿using System.Linq;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
+﻿
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
+using System.Linq;
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Keys;
 using Wintellect.Sterling.Core.Serialization;
@@ -18,7 +24,25 @@ namespace Wintellect.Sterling.Test.Keys
     [Tag("KeyCollection")]
 #endif
     [TestClass]
-    public class TestKeyCollection
+    public class TestKeyCollectionAltDriver : TestKeyCollection
+    {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver(_testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log);
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver(_testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log);
+#else
+            return new FileSystemDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+#endif
+        }
+    }
+
+#if SILVERLIGHT
+    [Tag("KeyCollection")]
+#endif
+    [TestClass]
+    public class TestKeyCollection : TestBase
     {
         private readonly TestModel[] _models = new[]
                                           {
@@ -26,9 +50,9 @@ namespace Wintellect.Sterling.Test.Keys
                                               TestModel.MakeTestModel()
                                           };
 
-        private MemoryDriver _driver;
+        private ISterlingDriver _driver;
         private KeyCollection<TestModel, int> _target;
-        private readonly ISterlingDatabaseInstance _testDatabase = new TestDatabaseInterfaceInstance();
+        protected readonly ISterlingDatabaseInstance _testDatabase = new TestDatabaseInterfaceInstance();
         private int _testAccessCount;
 
         /// <summary>
@@ -45,7 +69,7 @@ namespace Wintellect.Sterling.Test.Keys
         [TestInitialize]
         public void TestInit()
         {
-            _driver = new MemoryDriver(_testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log);
+            _driver = GetDriver();
             _testAccessCount = 0;            
             _target = new KeyCollection<TestModel, int>(_driver,
                                                         _GetTestModelByKey);

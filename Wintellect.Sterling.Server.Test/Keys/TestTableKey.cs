@@ -1,13 +1,19 @@
-﻿using System;
-using System.Linq;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
+﻿
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
+using System;
+using System.Linq;
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Keys;
 using Wintellect.Sterling.Test.Helpers;

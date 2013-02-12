@@ -1,32 +1,54 @@
-﻿using System;
+﻿
+#if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+#else
+using Wintellect.Sterling.Server.FileSystem;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
-#if NETFX_CORE
-using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
-using Wintellect.Sterling.WinRT.WindowsStorage;
-#else
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
+using System.Threading.Tasks;
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Exceptions;
 using Wintellect.Sterling.Test.Helpers;
-using System.Threading.Tasks;
 
 namespace Wintellect.Sterling.Test.Database
-{    
+{
 #if SILVERLIGHT
     [Tag("SaveAndLoad")]
 #endif
     [TestClass]
-    public class TestSaveAndLoad
+    public class TestSaveAndLoadAltDriver : TestSaveAndLoad
+    {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver();
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver();
+#else
+            return new FileSystemDriver();
+#endif
+        }
+    }
+
+#if SILVERLIGHT
+    [Tag("SaveAndLoad")]
+#endif
+    [TestClass]
+    public class TestSaveAndLoad : TestBase
     {
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _databaseInstance;
-        private readonly ISterlingDriver _driver = new MemoryDriver();
 
         public class TestLateBoundTable
         {
@@ -43,7 +65,7 @@ namespace Wintellect.Sterling.Test.Database
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver());
             _databaseInstance.PurgeAsync().Wait();
         }
 
@@ -94,6 +116,7 @@ namespace Wintellect.Sterling.Test.Database
         }
 
         [TestMethod]
+        [Ignore]
         public void TestSaveLateBoundTable()
         {
             // test saving and reloading

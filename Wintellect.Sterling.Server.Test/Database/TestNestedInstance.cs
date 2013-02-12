@@ -1,13 +1,19 @@
-using System;
-using System.Linq;
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
+
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
+using System;
+using System.Linq;
+
 using System.Collections.Generic;
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Database;
@@ -59,21 +65,36 @@ namespace Wintellect.Sterling.Test.Database
     [Tag("Database")]
 #endif
     [TestClass]
-    public class TestNestedInstance
+    public class TestNestedInstanceAltDriver : TestNestedInstance
+    {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver();
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver();
+#else
+            return new FileSystemDriver();
+#endif
+        }
+    }
+
+#if SILVERLIGHT
+    [Tag("Nested")]
+    [Tag("Database")]
+#endif
+    [TestClass]
+    public class TestNestedInstance : TestBase
     {
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _database;
-        private readonly ISterlingDriver _memoryDriver = new MemoryDriver();
 
         [TestInitialize]
         public void Init()
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            // Also fails when using memory storage, but you must remove explicit calls to Init and Shutdown
-            // in the test methods.
-            _database = _engine.SterlingDatabase.RegisterDatabase<NestedInstancesDatabase>(_memoryDriver);
-            
+            _database = _engine.SterlingDatabase.RegisterDatabase<NestedInstancesDatabase>(GetDriver());
         }
 
         [TestCleanup]

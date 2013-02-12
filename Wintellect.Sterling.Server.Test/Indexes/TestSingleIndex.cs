@@ -1,15 +1,18 @@
 ﻿
-using System.Collections.Generic;
-using System.Linq;
-
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
+using System.Collections.Generic;
+using System.Linq;
 
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Indexes;
@@ -19,17 +22,28 @@ using Wintellect.Sterling.Test.Helpers;
 namespace Wintellect.Sterling.Test.Indexes
 {
     [TestClass]
-    public class TestSingleIndex
+    public class TestSingleIndexAltDriver : TestSingleIndex
     {
-        private MemoryDriver _driver;
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+#else
+            return new FileSystemDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+#endif
+        }
+    }
 
+    [TestClass]
+    public class TestSingleIndex : TestBase
+    {
         private IndexCollection<TestModel, string, int> _target;
-
         private List<TestModel> _testModels;
-
-        private readonly ISterlingDatabaseInstance _testDatabase = new TestDatabaseInterfaceInstance();
-        
+        protected readonly ISterlingDatabaseInstance _testDatabase = new TestDatabaseInterfaceInstance();
         private int _testAccessCount;
+        private ISterlingDriver _driver;
 
         /// <summary>
         ///     Fetcher - also flag the fetch
@@ -47,8 +61,9 @@ namespace Wintellect.Sterling.Test.Indexes
         {
             if (_driver == null)
             {
-                _driver = new MemoryDriver(_testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log);
+                _driver = GetDriver();
             }
+
             _testModels = new List<TestModel>(3);
             for(var x = 0; x < 3; x++)
             {

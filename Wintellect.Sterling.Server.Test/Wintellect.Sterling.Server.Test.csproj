@@ -123,6 +123,7 @@
     <Compile Include="Serializer\TestCustomSerializer.cs" />
     <Compile Include="Serializer\TestDefaultSerializer.cs" />
     <Compile Include="Serializer\TestExtendedSerializer.cs" />
+    <Compile Include="TestBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.Core.csproj">

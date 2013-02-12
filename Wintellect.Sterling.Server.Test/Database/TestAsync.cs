@@ -1,10 +1,12 @@
-﻿using System;
+﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 #if SILVERLIGHT
 using Microsoft.Phone.Testing;
 using System.Windows;
@@ -15,6 +17,7 @@ using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 #else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Test.Helpers;
 

@@ -1,12 +1,16 @@
 ﻿
-#if SILVERLIGHT
-using Microsoft.Phone.Testing;
-#endif
 #if NETFX_CORE
+using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+#elif SILVERLIGHT
+using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8.IsolatedStorage;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
+
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Exceptions;
@@ -14,6 +18,25 @@ using Wintellect.Sterling.Test.Helpers;
 
 namespace Wintellect.Sterling.Test.Database
 {
+#if SILVERLIGHT
+    [Tag("Database")]
+    [Tag("Activation")]
+#endif
+    [TestClass]
+    public class TestActivationAltDriver : TestActivation
+    {
+        protected override ISterlingDriver GetDriver()
+        {
+#if NETFX_CORE
+            return new WindowsStorageDriver();
+#elif SILVERLIGHT
+            return new IsolatedStorageDriver();
+#else
+            return new FileSystemDriver();
+#endif
+        }
+    }
+
     /// <summary>
     ///     Test activation-related database steps
     /// </summary>
@@ -22,7 +45,7 @@ namespace Wintellect.Sterling.Test.Database
     [Tag("Activation")]
 #endif
     [TestClass]
-    public class TestActivation
+    public class TestActivation : TestBase
     {        
         /// <summary>
         ///     Test for a duplicate activation using different scenarios
@@ -105,7 +128,7 @@ namespace Wintellect.Sterling.Test.Database
 
                 try
                 {
-                    engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>();
+                    engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver());
                 }
                 catch (SterlingNotReadyException)
                 {
@@ -117,7 +140,7 @@ namespace Wintellect.Sterling.Test.Database
                 engine.Activate();
 
                 // this should not fail
-                engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>();              
+                engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver());              
             }
         }
     }
