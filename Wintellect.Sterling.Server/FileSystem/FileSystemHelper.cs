@@ -32,8 +32,6 @@ namespace Wintellect.Sterling.Server.FileSystem
             }
         }
 
-        private static readonly object _writerMutex = new object();
-
         /// <summary>
         ///     Get an isolated storage writer
         /// </summary>
@@ -43,17 +41,12 @@ namespace Wintellect.Sterling.Server.FileSystem
         {
             try
             {
-                Monitor.Enter(_writerMutex);
-                var stream = File.Open(path, FileMode.Create, FileAccess.Write);
-                return new BinaryWriter(stream);
+                var stream = File.Open( path, FileMode.Create, FileAccess.Write );
+                return new BinaryWriter( stream );
             }
             catch(Exception ex)
             {
                 throw new SterlingFileSystemException(ex);
-            }
-            finally
-            {
-                Monitor.Exit(_writerMutex);
             }
         }
 

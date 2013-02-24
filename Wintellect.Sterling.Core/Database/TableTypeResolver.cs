@@ -10,13 +10,14 @@ namespace Wintellect.Sterling.Core.Database
     /// </summary>
     public class TableTypeResolver
     {
-        #region Fields
-        private static List<ISterlingTypeResolver> _typeResolvers = new List<ISterlingTypeResolver>();
-        private static Dictionary<string, Type> _resolvedTypes = new Dictionary<string, Type>();
-        #endregion
+        private List<ISterlingTypeResolver> _typeResolvers = new List<ISterlingTypeResolver>();
+        private Dictionary<string, Type> _resolvedTypes = new Dictionary<string, Type>();
 
-        #region Public Methods
-        public static void RegisterTypeResolver(ISterlingTypeResolver interceptor)
+        public TableTypeResolver()
+        {
+        }
+
+        public void RegisterTypeResolver(ISterlingTypeResolver interceptor)
         {
             if (interceptor == null)
             {
@@ -29,7 +30,7 @@ namespace Wintellect.Sterling.Core.Database
             }
         }
 
-        public static Type ResolveTableType(string fullTypeName)
+        public Type ResolveTableType(string fullTypeName)
         {
             // TODO: searching for replacement type first makes unit testing possible, but isn't nice design
             Type tableType = (ResolveCachedType(fullTypeName) ??
@@ -38,17 +39,15 @@ namespace Wintellect.Sterling.Core.Database
             
             return tableType;
         }
-        #endregion
 
-        #region Private Implementation
-        private static Type ResolveCachedType(string fullTypeName)
+        private Type ResolveCachedType(string fullTypeName)
         {
             Type result;
             _resolvedTypes.TryGetValue(fullTypeName, out result);
             return result;
         }
 
-        private static Type ResolveOriginalType(string fullTypeName)
+        private Type ResolveOriginalType(string fullTypeName)
         {
             Type result = null;
 
@@ -63,7 +62,7 @@ namespace Wintellect.Sterling.Core.Database
             return result;
         }
 
-        private static Type ResolveReplacementType(string fullTypeName)
+        private Type ResolveReplacementType(string fullTypeName)
         {
             Type result = null;
             foreach (ISterlingTypeResolver typeResolver in _typeResolvers)
@@ -78,13 +77,12 @@ namespace Wintellect.Sterling.Core.Database
             return result;
         }
 
-        private static void CacheResolvedType(string fullTypeName, Type resolvedType)
+        private void CacheResolvedType(string fullTypeName, Type resolvedType)
         {
             if (resolvedType != null)
             {
                 _resolvedTypes[fullTypeName] = resolvedType;
             }
         }
-        #endregion
     }
 }

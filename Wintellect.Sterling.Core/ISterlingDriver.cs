@@ -88,7 +88,7 @@ namespace Wintellect.Sterling.Core
         ///     Publish the list of tables
         /// </summary>
         /// <param name="tables">The list of tables</param>
-        void PublishTables(Dictionary<Type,ITableDefinition> tables);
+        void PublishTables(Dictionary<Type,ITableDefinition> tables, Func<string, Type> resolveType );
 
         /// <summary>
         ///     Serialize the type master

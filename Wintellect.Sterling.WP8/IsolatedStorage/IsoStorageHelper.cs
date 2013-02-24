@@ -88,16 +88,12 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             {                
                 if (_iso.FileExists(path))
                 {
-                    var pathLock = PathLock.GetLock(path);
-                    lock (pathLock)
+                    if ( _iso.FileExists( path ) )
                     {
-                        if (_iso.FileExists(path))
+                        _iso.DeleteFile( path );
+                        if ( _files.Contains( path ) )
                         {
-                            _iso.DeleteFile(path);
-                            if (_files.Contains(path))
-                            {
-                                _files.Remove(path);
-                            }
+                            _files.Remove( path );
                         }
                     }
                 }
@@ -123,14 +119,10 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             {
                 if (!_paths.Contains(path))
                 {
-                    var pathLock = PathLock.GetLock(path);
-                    lock (pathLock)
+                    if ( !_iso.DirectoryExists( path ) )
                     {
-                        if (!_iso.DirectoryExists(path))
-                        {
-                            _iso.CreateDirectory(path);
-                            _paths.Add(path);
-                        }                        
+                        _iso.CreateDirectory( path );
+                        _paths.Add( path );
                     }
                 }
             }
@@ -149,21 +141,16 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             try
             {
-                var pathLock = PathLock.GetLock(path);
+                if ( _files.Contains( path ) )
+                    return true;
 
-                lock (pathLock)
+                if ( _iso.FileExists( path ) )
                 {
-                    if (_files.Contains(path))
-                        return true;
-
-                    if (_iso.FileExists(path))
-                    {
-                        _files.Add(path);
-                        return true;
-                    }
-
-                    return false;
+                    _files.Add( path );
+                    return true;
                 }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -213,26 +200,18 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
                     _iso.GetFileNames(Path.Combine(path, "*"))
                     .Select(file => Path.Combine(path, file)))
                 {
-                    var pathLock = PathLock.GetLock(filePath.Replace("\\", "/"));
-                    lock (pathLock)
+                    if ( _iso.FileExists( filePath ) )
                     {
-                        if (_iso.FileExists(filePath))
-                        {
-                            _iso.DeleteFile(filePath);
-                        }
+                        _iso.DeleteFile( filePath );
                     }
                 }
 
                 var dirPath = path.TrimEnd('\\', '/');
                 if (!string.IsNullOrEmpty(dirPath) && _iso.DirectoryExists(dirPath))
                 {
-                    var pathLock = PathLock.GetLock(dirPath);
-                    lock (pathLock)
+                    if ( _iso.DirectoryExists( dirPath ) )
                     {
-                        if (_iso.DirectoryExists(dirPath))
-                        {
-                            _iso.DeleteDirectory(dirPath);
-                        }
+                        _iso.DeleteDirectory( dirPath );
                     }
                 }
             }

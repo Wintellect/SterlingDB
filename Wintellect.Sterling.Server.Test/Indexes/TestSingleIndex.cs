@@ -21,21 +21,23 @@ using Wintellect.Sterling.Test.Helpers;
 
 namespace Wintellect.Sterling.Test.Indexes
 {
+    [Ignore]
     [TestClass]
     public class TestSingleIndexAltDriver : TestSingleIndex
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+            return new WindowsStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+            return new IsolatedStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #else
-            return new FileSystemDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+            return new FileSystemDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #endif
         }
     }
 
+    [Ignore]
     [TestClass]
     public class TestSingleIndex : TestBase
     {
@@ -56,13 +58,12 @@ namespace Wintellect.Sterling.Test.Indexes
             return (from t in _testModels where t.Key.Equals(key) select t).FirstOrDefault();
         }
 
+        public TestContext TestContext { get; set; }
+
         [TestInitialize]
         public void Init()
         {
-            if (_driver == null)
-            {
-                _driver = GetDriver();
-            }
+            _driver = GetDriver( TestContext.TestName );
 
             _testModels = new List<TestModel>(3);
             for(var x = 0; x < 3; x++)
@@ -78,6 +79,8 @@ namespace Wintellect.Sterling.Test.Indexes
         [TestCleanup]
         public void Cleanup()
         {
+            _driver.PurgeAsync().Wait();
+            _driver = null;
         }
 
         [TestMethod]
