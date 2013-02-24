@@ -28,31 +28,26 @@ namespace Wintellect.Sterling.Core.Indexes
         /// <summary>
         ///     Deserialize the indexes
         /// </summary>
-        protected override Task DeserializeIndexesAsync()
+        protected override async Task DeserializeIndexesAsync()
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    IndexList.Clear();
+            IndexList.Clear();
 
-                    var task = Driver.DeserializeIndexAsync<TKey, TIndex1, TIndex2>( typeof( T ), Name );
+            var indexes = await Driver.DeserializeIndexAsync<TKey, TIndex1, TIndex2>( typeof( T ), Name );
 
-                    foreach ( var index in task.Result ?? new Dictionary<TKey, Tuple<TIndex1, TIndex2>>() )
-                    {
-                        IndexList.Add( new TableIndex<T, TIndex1, TIndex2, TKey>( index.Value.Item1, index.Value.Item2, index.Key, Resolver ) );
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            foreach ( var index in indexes ?? new Dictionary<TKey, Tuple<TIndex1, TIndex2>>() )
+            {
+                IndexList.Add( new TableIndex<T, TIndex1, TIndex2, TKey>( index.Value.Item1, index.Value.Item2, index.Key, Resolver ) );
+            }
         }
 
         /// <summary>
         ///     Serializes the key list
         /// </summary>
-        protected override Task SerializeIndexesAsync()
+        protected override async Task SerializeIndexesAsync()
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var dictionary = IndexList.ToDictionary( item => item.Key, item => Tuple.Create( item.Index.Item1, item.Index.Item2 ) );
-                    Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
-                }, TaskCreationOptions.AttachedToParent );
+            var dictionary = IndexList.ToDictionary( item => item.Key, item => Tuple.Create( item.Index.Item1, item.Index.Item2 ) );
+
+            await Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
         }
         
 
@@ -62,14 +57,12 @@ namespace Wintellect.Sterling.Core.Indexes
         /// <param name="index2">The second index</param>
         /// <param name="key">The related key</param>
         /// <param name="index1">The first index</param>
-        public Task AddIndexAsync(object index1, object index2, object key)
+        public async Task AddIndexAsync(object index1, object index2, object key)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var newIndex = new TableIndex<T, TIndex1, TIndex2, TKey>( (TIndex1) index1, (TIndex2) index2, (TKey) key,
-                                                                             Resolver );
-                    AddIndexAsync( newIndex, key );
-                }, TaskCreationOptions.AttachedToParent );
+            var newIndex = new TableIndex<T, TIndex1, TIndex2, TKey>( (TIndex1) index1, (TIndex2) index2, (TKey) key,
+                                                                     Resolver );
+            
+            await AddIndexAsync( newIndex, key );
         }
     }
 }

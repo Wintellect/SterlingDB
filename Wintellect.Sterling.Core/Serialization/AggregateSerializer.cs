@@ -28,6 +28,13 @@ namespace Wintellect.Sterling.Core.Serialization
         /// </summary>
         private readonly List<Type> _noSerializer = new List<Type>();
 
+        private readonly ISterlingPlatformAdapter _platformAdapter;
+
+        public AggregateSerializer( ISterlingPlatformAdapter platformAdapter )
+        {
+            _platformAdapter = platformAdapter;
+        }
+
         /// <summary>
         ///     Clone the aggregate serializer and leave out the requesting (to avoid infinite loops)
         /// </summary>
@@ -35,7 +42,7 @@ namespace Wintellect.Sterling.Core.Serialization
         /// <returns>An aggregate serializer that omits the requesting serializer</returns>
         public ISterlingSerializer CloneFor(ISterlingSerializer serializer)
         {
-            var aggregateSerializer = new AggregateSerializer();
+            var aggregateSerializer = new AggregateSerializer( _platformAdapter );
             var query = from s in _serializers where !s.GetType().Equals(serializer.GetType()) select s;
             foreach(var s in query)
             {
@@ -106,7 +113,7 @@ namespace Wintellect.Sterling.Core.Serialization
         {
             var type = target.GetType();
 
-            if ( PlatformAdapter.Instance.IsEnum( type ) )
+            if ( _platformAdapter.IsEnum( type ) )
             {
                 type = Enum.GetUnderlyingType(type);
                 target = Convert.ChangeType( target, type, null );
@@ -132,7 +139,7 @@ namespace Wintellect.Sterling.Core.Serialization
         {
             var targetType = type;
 
-            if ( PlatformAdapter.Instance.IsEnum( targetType ) )
+            if ( _platformAdapter.IsEnum( targetType ) )
             {
                 targetType = Enum.GetUnderlyingType(targetType);
             }

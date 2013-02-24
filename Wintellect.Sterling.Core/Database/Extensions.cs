@@ -83,9 +83,9 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static bool IsIgnored(this Type type, Type ignoreAttribute)
+        public static bool IsIgnored(this Type type, Type ignoreAttribute, ISterlingPlatformAdapter platformAdapter)
         {
-            return PlatformAdapter.Instance.GetCustomAttributes( type, ignoreAttribute,false).Any();
+            return platformAdapter.GetCustomAttributes( type, ignoreAttribute,false).Any();
         }
 
     }

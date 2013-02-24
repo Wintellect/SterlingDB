@@ -102,7 +102,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             driver.Log(SterlingLogLevel.Verbose,
                             string.Format("Path Provider: Database Path Request: {0}", databaseName), null);
 
-            var path = Path.Combine(basePath, databaseName.GetHashCode().ToString()) + "/";
+            var path = Path.Combine(basePath, databaseName) + "/";
 
             driver.Log(SterlingLogLevel.Verbose, string.Format("Resolved database path from {0} to {1}",
                                                                     databaseName, path), null);
@@ -124,31 +124,11 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             _ContractForTableType(tableType);
             _ContractForDriver(driver);
 
-            var dbCode = databaseName.GetHashCode();
-
-            var pathLock = PathLock.GetLock(TABLEMASTER);
-            lock(pathLock)
-            {
-                if (!_tableMaster.ContainsKey(dbCode))
-                {
-                    _tableMaster.Add(dbCode, new Dictionary<Type, int>());
-                }
-            }
-
-            pathLock = PathLock.GetLock(tableType.FullName);
-            lock(pathLock)
-            {
-                if (!_tableMaster[dbCode].ContainsKey(tableType))
-                {
-                    _tableMaster[dbCode].Add(tableType, _tableMaster[dbCode].Count);
-                }
-            }
-
             driver.Log(SterlingLogLevel.Verbose,
                             string.Format("Path Provider: Table Path Request: {0}", tableType.FullName), null);
 
             var path = Path.Combine(GetDatabasePath(basePath, databaseName, driver),
-                                _tableMaster[dbCode][tableType].ToString()) + "/";
+                                tableType.FullName) + "/";
 
             driver.Log(SterlingLogLevel.Verbose, string.Format("Resolved table path from {0} to {1}",
                                                                     tableType.FullName, path), null);

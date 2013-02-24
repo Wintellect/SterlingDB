@@ -68,14 +68,14 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestEnumAltDriver : TestEnum
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -90,12 +90,14 @@ namespace Wintellect.Sterling.Test.Database
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _databaseInstance;
 
+        public TestContext TestContext { get; set; }
+
         [TestInitialize]
         public void TestInit()
         {           
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<EnumDatabase>( GetDriver() );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<EnumDatabase>( GetDriver( TestContext.TestName ) );
             _databaseInstance.PurgeAsync().Wait();
         }
 

@@ -19,7 +19,7 @@ namespace Wintellect.Sterling.Core.Serialization
         /// <summary>
         ///     Default constructor
         /// </summary>
-        public ExtendedSerializer()
+        public ExtendedSerializer( ISterlingPlatformAdapter platformAdapter )
         {
             // wire up the serialization pairs 
             _serializers.Add( typeof( DateTime ), new Tuple<Action<BinaryWriter, object>, Func<BinaryReader, object>>(
@@ -69,7 +69,7 @@ namespace Wintellect.Sterling.Core.Serialization
                                  },
                                  br => new DateTimeOffset( br.ReadInt64(), new TimeSpan( br.ReadInt64() ) ) ) );
 
-            var bitmapSerializer = PlatformAdapter.Instance.GetBitmapSerializer();
+            var bitmapSerializer = platformAdapter.GetBitmapSerializer();
 
             if ( bitmapSerializer != null )
             {

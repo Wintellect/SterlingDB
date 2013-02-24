@@ -11,6 +11,7 @@ namespace Wintellect.Sterling.Core.Indexes
     /// </summary>
     internal class IndexCollection<T, TIndex, TKey> : IIndexCollection where T : class, new()
     {
+        protected readonly AsyncLock _lock = new AsyncLock();
         protected readonly ISterlingDriver Driver;
         protected Func<TKey, T> Resolver;
         private Func<T, TIndex> _indexer;
@@ -51,7 +52,7 @@ namespace Wintellect.Sterling.Core.Indexes
             _indexer = indexer;
             Resolver = resolver;
 
-            DeserializeIndexesAsync().Wait();   // need to fix this
+            DeserializeIndexesAsync().Wait();
 
             IsDirty = false;
         }
@@ -69,83 +70,70 @@ namespace Wintellect.Sterling.Core.Indexes
         /// <summary>
         ///     Deserialize the indexes
         /// </summary>
-        protected virtual Task DeserializeIndexesAsync()
+        protected virtual async Task DeserializeIndexesAsync()
         {
-            return Task.Factory.StartNew( () =>
+            IndexList.Clear();
+
+            var result = await Driver.DeserializeIndexAsync<TKey, TIndex>( typeof( T ), Name );
+
+            foreach ( var index in result ?? new Dictionary<TKey, TIndex>() )
             {
-                IndexList.Clear();
-
-                var task = Driver.DeserializeIndexAsync<TKey, TIndex>( typeof( T ), Name );
-
-                foreach ( var index in task.Result ?? new Dictionary<TKey, TIndex>() )
-                {
-                    IndexList.Add( new TableIndex<T, TIndex, TKey>( index.Value, index.Key, Resolver ) );
-                }
-            }, TaskCreationOptions.AttachedToParent );
+                IndexList.Add( new TableIndex<T, TIndex, TKey>( index.Value, index.Key, Resolver ) );
+            }
         }
 
         /// <summary>
         ///     Serializes the key list
         /// </summary>
-        protected virtual Task SerializeIndexesAsync()
+        protected virtual async Task SerializeIndexesAsync()
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var dictionary = IndexList.ToDictionary( item => item.Key, item => item.Index );
-                    
-                    Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
-                }, TaskCreationOptions.AttachedToParent );
+            var dictionary = IndexList.ToDictionary( item => item.Key, item => item.Index );
+
+            await Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
         }
         
         /// <summary>
         ///     Serialize
         /// </summary>
-        public Task FlushAsync()
+        public async Task FlushAsync()
         {
-            return Task.Factory.StartNew( () =>
+            using( await _lock.LockAsync() )
             {
-                lock ( ( (ICollection) IndexList ).SyncRoot )
+                if ( IsDirty )
                 {
-                    if ( IsDirty )
-                    {
-                        SerializeIndexesAsync();
-                    }
-                    IsDirty = false;
+                    await SerializeIndexesAsync();
                 }
-            }, TaskCreationOptions.AttachedToParent );
+
+                IsDirty = false;
+            }
         }             
 
         /// <summary>
         ///     Refresh the list
         /// </summary>
-        public Task RefreshAsync()
+        public async Task RefreshAsync()
         {
-            return Task.Factory.StartNew( () =>
+            using ( await _lock.LockAsync() )
+            {
+                if ( IsDirty )
                 {
-                    lock ( ( (ICollection) IndexList ).SyncRoot )
-                    {
-                        if ( IsDirty )
-                        {
-                            SerializeIndexesAsync().Wait();
-                        }
-                        
-                        DeserializeIndexesAsync().Wait();
-                        
-                        IsDirty = false;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                    await SerializeIndexesAsync();
+                }
+
+                await DeserializeIndexesAsync();
+
+                IsDirty = false;
+            }
         }
 
         /// <summary>
         ///     Truncate index
         /// </summary>
-        public Task TruncateAsync()
+        public async Task TruncateAsync()
         {
-            return Task.Factory.StartNew( () =>
-            {
-                IsDirty = false;
-                RefreshAsync();
-            }, TaskCreationOptions.AttachedToParent );
+            IsDirty = false;
+            
+            await RefreshAsync();
         }
       
         /// <summary>
@@ -153,24 +141,23 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         /// <param name="instance">The instance</param>
         /// <param name="key">The related key</param>
-        public Task AddIndexAsync(object instance, object key)
+        public async Task AddIndexAsync(object instance, object key)
         {
-            return Task.Factory.StartNew( () =>
+            var newIndex = new TableIndex<T, TIndex, TKey>( _indexer( (T) instance ), (TKey) key, Resolver );
+
+            using( await _lock.LockAsync() )
+            {
+                if ( !IndexList.Contains( newIndex ) )
                 {
-                    var newIndex = new TableIndex<T, TIndex, TKey>( _indexer( (T) instance ), (TKey) key, Resolver );
-                    lock ( ( (ICollection) IndexList ).SyncRoot )
-                    {
-                        if ( !IndexList.Contains( newIndex ) )
-                        {
-                            IndexList.Add( newIndex );
-                        }
-                        else
-                        {
-                            IndexList[ IndexList.IndexOf( newIndex ) ] = newIndex;
-                        }
-                    }
-                    IsDirty = true;
-                }, TaskCreationOptions.AttachedToParent );
+                    IndexList.Add( newIndex );
+                }
+                else
+                {
+                    IndexList[ IndexList.IndexOf( newIndex ) ] = newIndex;
+                }
+
+                IsDirty = true;
+            }
         }
 
         /// <summary>
@@ -178,40 +165,37 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         /// <param name="instance">The instance</param>
         /// <param name="key">The key</param>
-        public Task UpdateIndexAsync(object instance, object key)
+        public async Task UpdateIndexAsync(object instance, object key)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var index = ( from i in IndexList where i.Key.Equals( key ) select i ).FirstOrDefault();
+            var index = ( from i in IndexList where i.Key.Equals( key ) select i ).FirstOrDefault();
 
-                    if ( index == null ) return;
+            if ( index == null ) return;
 
-                    index.Index = _indexer( (T) instance );
-                    index.Refresh();
-                    IsDirty = true;
-                }, TaskCreationOptions.AttachedToParent );
+            index.Index = _indexer( (T) instance );
+
+            index.Refresh();
+
+            IsDirty = true;
         }
 
         /// <summary>
         ///     Remove an index from the list
         /// </summary>
         /// <param name="key">The key</param>
-        public Task RemoveIndexAsync(object key)
+        public async Task RemoveIndexAsync(object key)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var index = ( from i in IndexList where i.Key.Equals( key ) select i ).FirstOrDefault();
+            var index = ( from i in IndexList where i.Key.Equals( key ) select i ).FirstOrDefault();
 
-                    if ( index == null ) return;
+            if ( index == null ) return;
 
-                    lock ( ( (ICollection) IndexList ).SyncRoot )
-                    {
-                        if ( !IndexList.Contains( index ) ) return;
+            using( await _lock.LockAsync() )
+            {
+                if ( !IndexList.Contains( index ) ) return;
 
-                        IndexList.Remove( index );
-                        IsDirty = true;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                IndexList.Remove( index );
+
+                IsDirty = true;
+            }
         }        
     }
 }

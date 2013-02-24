@@ -18,6 +18,12 @@ namespace Wintellect.Sterling.Core
         {            
         }
 
+        public MemoryDriver( string databaseName, ISterlingSerializer serializer )
+        {
+            this.DatabaseName = databaseName;
+            this.DatabaseSerializer = serializer;
+        }
+
         public MemoryDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : base(databaseName, serializer, log)
         {
         }
@@ -37,21 +43,20 @@ namespace Wintellect.Sterling.Core
         /// </summary>
         private readonly Dictionary<Tuple<string,int>, byte[]> _objectCache = new Dictionary<Tuple<string,int>, byte[]>();
 
+        private readonly AsyncLock _lock = new AsyncLock();
+
         /// <summary>
         ///     Serialize the keys
         /// </summary>
         /// <param name="type">Type of the parent table</param>
         /// <param name="keyType">Type of the key</param>
         /// <param name="keyMap">Key map</param>
-        public override Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
+        public override async Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    lock ( ( (ICollection) _keyCache ).SyncRoot )
-                    {
-                        _keyCache[ type ] = keyMap;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            using ( await _lock.LockAsync() )
+            {
+                _keyCache[ type ] = keyMap;
+            }
         }
 
         /// <summary>
@@ -61,15 +66,12 @@ namespace Wintellect.Sterling.Core
         /// <param name="keyType">Type of the key</param>
         /// <param name="template">The template</param>
         /// <returns>The keys without the template</returns>
-        public override Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary template)
+        public override async Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary template)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    lock ( ( (ICollection) _keyCache ).SyncRoot )
-                    {
-                        return _keyCache.ContainsKey( type ) ? _keyCache[ type ] as IDictionary : template;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            using ( await _lock.LockAsync() )
+            {
+                return _keyCache.ContainsKey( type ) ? _keyCache[ type ] as IDictionary : template;
+            }
         }
 
         /// <summary>
@@ -80,21 +82,19 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>
         /// <param name="indexMap">The index map</param>
-        public override Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
+        public override async Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
         {
-            return Task.Factory.StartNew( () =>
+            using ( await _lock.LockAsync() )
+            {
+                if ( !_indexCache.ContainsKey( type ) )
                 {
-                    lock ( ( (ICollection) _indexCache ).SyncRoot )
-                    {
-                        if ( !_indexCache.ContainsKey( type ) )
-                        {
-                            _indexCache.Add( type, new Dictionary<string, object>() );
-                        }
+                    _indexCache.Add( type, new Dictionary<string, object>() );
+                }
 
-                        var indexCache = _indexCache[ type ];
-                        indexCache[ indexName ] = indexMap;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                var indexCache = _indexCache[ type ];
+
+                indexCache[ indexName ] = indexMap;
+            }
         }
 
         /// <summary>
@@ -106,21 +106,19 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>
         /// <param name="indexMap">The index map</param>        
-        public override Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
+        public override async Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
         {
-            return Task.Factory.StartNew( () =>
+            using ( await _lock.LockAsync() )
+            {
+                if ( !_indexCache.ContainsKey( type ) )
                 {
-                    lock ( ( (ICollection) _indexCache ).SyncRoot )
-                    {
-                        if ( !_indexCache.ContainsKey( type ) )
-                        {
-                            _indexCache.Add( type, new Dictionary<string, object>() );
-                        }
+                    _indexCache.Add( type, new Dictionary<string, object>() );
+                }
 
-                        var indexCache = _indexCache[ type ];
-                        indexCache[ indexName ] = indexMap;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                var indexCache = _indexCache[ type ];
+
+                indexCache[ indexName ] = indexMap;
+            }
         }
 
         /// <summary>
@@ -131,23 +129,20 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>        
         /// <returns>The index map</returns>
-        public override Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
+        public override async Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    lock ( ( (ICollection) _indexCache ).SyncRoot )
-                    {
-                        if ( !_indexCache.ContainsKey( type ) )
-                            return null;
+            using ( await _lock.LockAsync() )
+            {
+                if ( !_indexCache.ContainsKey( type ) )
+                    return null;
 
-                        var indexCache = _indexCache[ type ];
+                var indexCache = _indexCache[ type ];
 
-                        if ( !indexCache.ContainsKey( indexName ) )
-                            return null;
+                if ( !indexCache.ContainsKey( indexName ) )
+                    return null;
 
-                        return indexCache[ indexName ] as Dictionary<TKey, TIndex>;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                return indexCache[ indexName ] as Dictionary<TKey, TIndex>;
+            }
         }
 
         /// <summary>
@@ -159,30 +154,27 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>        
         /// <returns>The index map</returns>        
-        public override Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
+        public override async Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    lock ( ( (ICollection) _indexCache ).SyncRoot )
-                    {
-                        if ( !_indexCache.ContainsKey( type ) )
-                            return null;
+            using ( await _lock.LockAsync() )
+            {
+                if ( !_indexCache.ContainsKey( type ) )
+                    return null;
 
-                        var indexCache = _indexCache[ type ];
+                var indexCache = _indexCache[ type ];
 
-                        if ( !indexCache.ContainsKey( indexName ) )
-                            return null;
+                if ( !indexCache.ContainsKey( indexName ) )
+                    return null;
 
-                        return indexCache[ indexName ] as Dictionary<TKey, Tuple<TIndex1, TIndex2>>;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                return indexCache[ indexName ] as Dictionary<TKey, Tuple<TIndex1, TIndex2>>;
+            }
         }
 
         /// <summary>
         ///     Publish the list of tables
         /// </summary>
         /// <param name="tables">The list of tables</param>
-        public override void PublishTables(Dictionary<Type, ITableDefinition> tables)
+        public override void PublishTables( Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
             return;
         }
@@ -192,7 +184,7 @@ namespace Wintellect.Sterling.Core
         /// </summary>
         public override Task SerializeTypesAsync()
         {
-            return Task.Factory.StartNew( () => { }, TaskCreationOptions.AttachedToParent );
+            return Task.Factory.StartNew( () => { } );
         }
 
         /// <summary>
@@ -201,16 +193,14 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">Type of the parent</param>
         /// <param name="keyIndex">Index for the key</param>
         /// <param name="bytes">The byte stream</param>
-        public override Task SaveAsync(Type type, int keyIndex, byte[] bytes)
+        public override async Task SaveAsync(Type type, int keyIndex, byte[] bytes)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var key = Tuple.Create( type.FullName, keyIndex );
-                    lock ( ( (ICollection) _objectCache ).SyncRoot )
-                    {
-                        _objectCache[ key ] = bytes;
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            var key = Tuple.Create( type.FullName, keyIndex );
+
+            using( await _lock.LockAsync() )
+            {
+                _objectCache[ key ] = bytes;
+            }
         }
 
         /// <summary>
@@ -219,20 +209,18 @@ namespace Wintellect.Sterling.Core
         /// <param name="type">The type of the parent</param>
         /// <param name="keyIndex">The index of the key</param>
         /// <returns>The byte stream</returns>
-        public override Task<BinaryReader> LoadAsync(Type type, int keyIndex)
+        public override async Task<BinaryReader> LoadAsync(Type type, int keyIndex)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var key = Tuple.Create( type.FullName, keyIndex );
-                    byte[] bytes;
-                    lock ( ( (ICollection) _objectCache ).SyncRoot )
-                    {
-                        bytes = _objectCache[ key ];
-                    }
+            var key = Tuple.Create( type.FullName, keyIndex );
+            byte[] bytes;
 
-                    var memStream = new MemoryStream( bytes );
-                    return new BinaryReader( memStream );
-                }, TaskCreationOptions.AttachedToParent );
+            using ( await _lock.LockAsync() )
+            {
+                bytes = _objectCache[ key ];
+            }
+
+            var memStream = new MemoryStream( bytes );
+            return new BinaryReader( memStream );
         }
 
         /// <summary>
@@ -240,72 +228,61 @@ namespace Wintellect.Sterling.Core
         /// </summary>
         /// <param name="type">The type of the parent</param>
         /// <param name="keyIndex">The index of the key</param>
-        public override Task DeleteAsync(Type type, int keyIndex)
+        public override async Task DeleteAsync(Type type, int keyIndex)
         {
-            return Task.Factory.StartNew( () =>
+            var key = Tuple.Create( type.FullName, keyIndex );
+
+            using ( await _lock.LockAsync() )
+            {
+                if ( _objectCache.ContainsKey( key ) )
                 {
-                    var key = Tuple.Create( type.FullName, keyIndex );
-                    lock ( ( (ICollection) _objectCache ).SyncRoot )
-                    {
-                        if ( _objectCache.ContainsKey( key ) )
-                        {
-                            _objectCache.Remove( key );
-                        }
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                    _objectCache.Remove( key );
+                }
+            }
         }
 
         /// <summary>
         ///     Truncate a type
         /// </summary>
         /// <param name="type">The type to truncate</param>
-        public override Task TruncateAsync(Type type)
+        public override async Task TruncateAsync(Type type)
         {
-            return Task.Factory.StartNew( () =>
+            var typeString = type.FullName;
+
+            using ( await _lock.LockAsync() )
+            {
+                var keys = from key in _objectCache.Keys where key.Item1.Equals( typeString ) select key;
+
+                foreach ( var key in keys.ToList() )
                 {
-                    var typeString = type.FullName;
-                    lock ( ( (ICollection) _objectCache ).SyncRoot )
-                    {
-                        var keys = from key in _objectCache.Keys where key.Item1.Equals( typeString ) select key;
-                        foreach ( var key in keys.ToList() )
-                        {
-                            _objectCache.Remove( key );
-                        }
+                    _objectCache.Remove( key );
+                }
 
-                        lock ( ( (ICollection) _indexCache ).SyncRoot )
-                        {
-                            var indexes = from index in _indexCache.Keys where _indexCache.ContainsKey( type ) select index;
-                            foreach ( var index in indexes.ToList() )
-                            {
-                                _indexCache.Remove( index );
-                            }
-                        }
+                var indexes = from index in _indexCache.Keys where _indexCache.ContainsKey( type ) select index;
 
-                        lock ( ( (ICollection) _keyCache ).SyncRoot )
-                        {
-                            if ( _keyCache.ContainsKey( type ) )
-                            {
-                                _keyCache.Remove( type );
-                            }
-                        }
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                foreach ( var index in indexes.ToList() )
+                {
+                    _indexCache.Remove( index );
+                }
+
+                if ( _keyCache.ContainsKey( type ) )
+                {
+                    _keyCache.Remove( type );
+                }
+            }
         }
 
         /// <summary>
         ///     Purge the database
         /// </summary>
-        public override Task PurgeAsync()
+        public override async Task PurgeAsync()
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var types = from key in _keyCache.Keys select key;
-                    
-                    foreach ( var type in types.ToList() )
-                    {
-                        TruncateAsync( type );
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            var types = from key in _keyCache.Keys select key;
+
+            foreach ( var type in types.ToList() )
+            {
+                await TruncateAsync( type );
+            }
         }
     }
 }

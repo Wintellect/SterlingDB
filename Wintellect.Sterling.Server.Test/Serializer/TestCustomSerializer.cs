@@ -144,14 +144,14 @@ namespace Wintellect.Sterling.Test.Serializer
     [TestClass]
     public class TestCustomSerializerAltDriver : TestCustomSerializer
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -169,6 +169,8 @@ namespace Wintellect.Sterling.Test.Serializer
         private SterlingEngine _engine;
         public static ISterlingDatabaseInstance DatabaseInstance;
 
+        public TestContext TestContext { get; set; }
+
         /// <summary>
         ///    Initialize the test
         /// </summary>
@@ -178,7 +180,7 @@ namespace Wintellect.Sterling.Test.Serializer
             _engine = Factory.NewEngine();
             _engine.SterlingDatabase.RegisterSerializer<SupportSerializer>();            
             _engine.Activate();
-            DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>( GetDriver() );
+            DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>( GetDriver( TestContext.TestName ) );
             DatabaseInstance.PurgeAsync().Wait();
         }
 

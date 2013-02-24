@@ -10,7 +10,7 @@ namespace Wintellect.Sterling.Test
 {
     public abstract class TestBase
     {
-        protected virtual ISterlingDriver GetDriver()
+        protected virtual ISterlingDriver GetDriver( string test )
         {
             return new MemoryDriver();
         }

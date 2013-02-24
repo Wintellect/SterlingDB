@@ -7,6 +7,7 @@ using Microsoft.Phone.Testing;
 using Wintellect.Sterling.WP8.IsolatedStorage;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #else
+using System;
 using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
@@ -14,6 +15,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
 using Wintellect.Sterling.Core;
+using Wintellect.Sterling.Core.Database;
 using Wintellect.Sterling.Core.Keys;
 using Wintellect.Sterling.Core.Serialization;
 using Wintellect.Sterling.Test.Helpers;
@@ -23,17 +25,18 @@ namespace Wintellect.Sterling.Test.Keys
 #if SILVERLIGHT
     [Tag("KeyCollection")]
 #endif
+    [Ignore]
     [TestClass]
     public class TestKeyCollectionAltDriver : TestKeyCollection
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver(_testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log);
+            return new WindowsStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver(_testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log);
+            return new IsolatedStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #else
-            return new FileSystemDriver( _testDatabase.Name, new DefaultSerializer(), SterlingFactory.GetLogger().Log );
+            return new FileSystemDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #endif
         }
     }
@@ -41,6 +44,7 @@ namespace Wintellect.Sterling.Test.Keys
 #if SILVERLIGHT
     [Tag("KeyCollection")]
 #endif
+    [Ignore]
     [TestClass]
     public class TestKeyCollection : TestBase
     {
@@ -54,6 +58,8 @@ namespace Wintellect.Sterling.Test.Keys
         private KeyCollection<TestModel, int> _target;
         protected readonly ISterlingDatabaseInstance _testDatabase = new TestDatabaseInterfaceInstance();
         private int _testAccessCount;
+
+        public TestContext TestContext { get; set; }
 
         /// <summary>
         ///     Fetcher - also flag the fetch
@@ -69,11 +75,18 @@ namespace Wintellect.Sterling.Test.Keys
         [TestInitialize]
         public void TestInit()
         {
-            _driver = GetDriver();
+            _driver = GetDriver( TestContext.TestName );
             _testAccessCount = 0;            
             _target = new KeyCollection<TestModel, int>(_driver,
                                                         _GetTestModelByKey);
-        }       
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            _driver.PurgeAsync().Wait();
+            _driver = null;
+        }
 
         [TestMethod]
         public void TestAddKey()

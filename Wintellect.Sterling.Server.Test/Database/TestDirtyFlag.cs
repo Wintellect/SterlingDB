@@ -22,7 +22,8 @@ using Wintellect.Sterling.Test.Helpers;
 namespace Wintellect.Sterling.Test.Database
 {
     public class DirtyDatabase : BaseDatabaseInstance
-    {       
+    {
+        public Predicate<TestModel> Predicate { get; set; }
 
         /// <summary>
         ///     The name of the database instance
@@ -42,7 +43,7 @@ namespace Wintellect.Sterling.Test.Database
                            {
                                CreateTableDefinition<TestListModel, int>(t=>t.ID),
                                CreateTableDefinition<TestModel, int>(t=>t.Key)
-                               .WithDirtyFlag<TestModel,int>(o=>TestDirtyFlag.IsTestDirty(o))
+                               .WithDirtyFlag<TestModel,int>(o=>this.Predicate(o))
                            };
         }
     }
@@ -54,14 +55,14 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestDirtyFlagAltDriver : TestDirtyFlag
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -76,14 +77,19 @@ namespace Wintellect.Sterling.Test.Database
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _databaseInstance;
 
-        public static Predicate<TestModel> IsTestDirty = model => true;
+        public TestContext TestContext { get; set; }
+
+        public TestDirtyFlag()
+        {
+        }
 
         [TestInitialize]
         public void TestInit()
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<DirtyDatabase>( GetDriver() );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<DirtyDatabase>( GetDriver( TestContext.TestName ) );
+            ( (DirtyDatabase) _databaseInstance ).Predicate = model => true;
             _databaseInstance.PurgeAsync().Wait();
         }
 
@@ -110,8 +116,7 @@ namespace Wintellect.Sterling.Test.Database
                 model.ResetAccess();
             }
 
-            // set so it is always dirty
-            IsTestDirty = model => true;
+            ( (DirtyDatabase) _databaseInstance ).Predicate = model => true;
 
             // now check that all were accessed
             _databaseInstance.SaveAsync( actual ).Wait();
@@ -136,8 +141,7 @@ namespace Wintellect.Sterling.Test.Database
                 model.ResetAccess();
             }
 
-            // set so it is never dirty
-            IsTestDirty = model => false;
+            ( (DirtyDatabase) _databaseInstance ).Predicate = model => false;
 
             // now check that none were accessed
             _databaseInstance.SaveAsync( actual ).Wait();

@@ -25,14 +25,14 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestActivationAltDriver : TestActivation
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -46,7 +46,9 @@ namespace Wintellect.Sterling.Test.Database
 #endif
     [TestClass]
     public class TestActivation : TestBase
-    {        
+    {
+        public TestContext TestContext { get; set; }
+
         /// <summary>
         ///     Test for a duplicate activation using different scenarios
         /// </summary>
@@ -56,68 +58,43 @@ namespace Wintellect.Sterling.Test.Database
             var engine1 = Factory.NewEngine();
             var engine2 = Factory.NewEngine();
             
-            Assert.AreSame(engine1.SterlingDatabase, engine2.SterlingDatabase, "Sterling did not return the same database.");
+            Assert.AreNotSame(engine1.SterlingDatabase, engine2.SterlingDatabase, "Sterling returned the same database instance from two separate engine instances.");
             
             engine1.Activate();
-
-            var exception = false;
-
-            try
-            {
-                engine2.Activate();
-            }
-            catch(SterlingActivationException)
-            {
-                exception = true;
-            }
-
-            Assert.IsTrue(exception, "Sterling did not throw an activation exception on duplicate activation.");
+            engine2.Activate();
 
             engine1.Dispose();
 
-            // this should be ok now
+            engine2.Activate();
             engine2.Activate();
 
-            // now we'll duplicate it again
-            exception = false;
-
-            try
-            {
-                engine2.Activate();
-            }
-            catch (SterlingActivationException)
-            {
-                exception = true;
-            }
-
-            Assert.IsTrue(exception, "Sterling did not throw an activation exception on duplicate activation.");
-
-            engine2.Dispose();            
+            engine2.Dispose();
+            engine1.Dispose();
         }
 
-        [TestMethod]
-        public void TestDuplicateClass()
-        {
-            using (var engine = Factory.NewEngine())
-            {
-                engine.Activate();
+        //[TestMethod]
+        //public void TestDuplicateClass()
+        //{
+        //    using (var engine = Factory.NewEngine())
+        //    {
+        //        engine.Activate();
 
-                // now cheat and try to make a new sterling database directly
-                var database = new SterlingDatabase(SterlingFactory.GetLogger());
+        //        // now cheat and try to make a new sterling database directly
+        //        var database = new SterlingDatabase(SterlingFactory.GetLogger());
 
-                var exception = false; 
-                try
-                {
-                    database.Activate();
-                }
-                catch (SterlingActivationException)
-                {
-                    exception = true;
-                }
+        //        var exception = false; 
+        //        try
+        //        {
+        //            database.Activate();
+        //        }
+        //        catch (SterlingActivationException)
+        //        {
+        //            exception = true;
+        //        }
 
-                Assert.IsTrue(exception, "Sterling did not throw an activation exception on duplicate activation with new database class.");
-            }
-        }
+        //        Assert.IsTrue(exception, "Sterling did not throw an activation exception on duplicate activation with new database class.");
+        //    }
+        //}
 
         [TestMethod]
         public void TestActivationNotReady()
@@ -128,7 +105,7 @@ namespace Wintellect.Sterling.Test.Database
 
                 try
                 {
-                    engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver());
+                    engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver( TestContext.TestName ));
                 }
                 catch (SterlingNotReadyException)
                 {
@@ -140,7 +117,7 @@ namespace Wintellect.Sterling.Test.Database
                 engine.Activate();
 
                 // this should not fail
-                engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver());              
+                engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver( TestContext.TestName ));              
             }
         }
     }

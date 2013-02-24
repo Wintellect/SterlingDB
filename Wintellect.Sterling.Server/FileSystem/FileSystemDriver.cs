@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Wintellect.Sterling.Core;
 using Wintellect.Sterling.Core.Database;
@@ -27,7 +28,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         {
             Initialize(basePath);
         }
-       
+
         public FileSystemDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : this(databaseName, serializer, log, BASE)
         {
         }
@@ -44,8 +45,8 @@ namespace Wintellect.Sterling.Server.FileSystem
 
         public void Initialize(string basePath)
         {
-            _fileHelper = new FileSystemHelper();            
-            _basePath = basePath; 
+            _fileHelper = new FileSystemHelper();
+            _basePath = basePath.EndsWith( "/" ) ? basePath : basePath + "/";
         }
 
         /// <summary>
@@ -57,25 +58,27 @@ namespace Wintellect.Sterling.Server.FileSystem
         public override Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
             return Task.Factory.StartNew( () =>
-            {
-                _fileHelper.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
-                var pathLock = PathLock.GetLock( type.FullName );
-                lock ( pathLock )
                 {
-                    var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
-                    using ( var keyFile = _fileHelper.GetWriter( keyPath ) )
+                    _fileHelper.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
+
+                    var pathLock = PathLock.GetLock( type.FullName );
+
+                    lock ( pathLock )
                     {
-                        keyFile.Write( keyMap.Count );
-                        foreach ( var key in keyMap.Keys )
+                        var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+                        using ( var keyFile = _fileHelper.GetWriter( keyPath ) )
                         {
-                            DatabaseSerializer.Serialize( key, keyFile );
-                            keyFile.Write( (int) keyMap[ key ] );
+                            keyFile.Write( keyMap.Count );
+                            foreach ( var key in keyMap.Keys )
+                            {
+                                DatabaseSerializer.Serialize( key, keyFile );
+                                keyFile.Write( (int) keyMap[ key ] );
+                            }
                         }
                     }
-                }
 
-                SerializeTypesAsync();
-            }, TaskCreationOptions.AttachedToParent );
+                    SerializeTypesAsync();
+                }, TaskCreationOptions.AttachedToParent );
         }
 
         /// <summary>
@@ -245,7 +248,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         ///     Publish the list of tables
         /// </summary>
         /// <param name="tables">The list of tables</param>
-        public override void PublishTables(Dictionary<Type, ITableDefinition> tables)
+        public override void PublishTables(Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
             _fileHelper.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
 
@@ -259,7 +262,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                 for (var x = 0; x < count; x++)
                 {
                     var fullTypeName = typeFile.ReadString();
-                    var tableType = TableTypeResolver.ResolveTableType(fullTypeName);
+                    var tableType = resolveType(fullTypeName);
                     if (tableType == null)
                     {
                         throw new SterlingTableNotFoundException(fullTypeName, DatabaseName);

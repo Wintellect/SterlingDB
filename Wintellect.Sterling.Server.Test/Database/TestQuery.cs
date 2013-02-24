@@ -25,14 +25,14 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestQueryAltDriver : TestQuery
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -45,14 +45,16 @@ namespace Wintellect.Sterling.Test.Database
     {
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _databaseInstance;
-        private List<TestModel> _modelList; 
+        private List<TestModel> _modelList;
+
+        public TestContext TestContext { get; set; }
 
         [TestInitialize]
         public void TestInit()
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>( GetDriver() );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>( GetDriver( TestContext.TestName ) );
             _modelList = new List<TestModel>();
             for (var i = 0; i < 10; i++)
             {

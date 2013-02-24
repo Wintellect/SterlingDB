@@ -67,14 +67,14 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestNestedInstanceAltDriver : TestNestedInstance
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -89,12 +89,14 @@ namespace Wintellect.Sterling.Test.Database
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _database;
 
+        public TestContext TestContext { get; set; }
+
         [TestInitialize]
         public void Init()
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _database = _engine.SterlingDatabase.RegisterDatabase<NestedInstancesDatabase>(GetDriver());
+            _database = _engine.SterlingDatabase.RegisterDatabase<NestedInstancesDatabase>(GetDriver( TestContext.TestName ));
         }
 
         [TestCleanup]
@@ -172,15 +174,6 @@ namespace Wintellect.Sterling.Test.Database
             _database.FlushAsync().Wait();
             
             var billKeys = _database.Query<Bill, Guid>();
-
-            Assert.IsTrue(billKeys.Count == 1);
-            Assert.AreEqual(billKeys[0].Key, bill.Id);
-
-            Shutdown();
-            Init();
-
-            // Check ids
-            billKeys = _database.Query<Bill, Guid>();
 
             Assert.IsTrue(billKeys.Count == 1);
             Assert.AreEqual(billKeys[0].Key, bill.Id);

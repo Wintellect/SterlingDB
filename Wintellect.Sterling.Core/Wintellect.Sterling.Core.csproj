@@ -39,6 +39,7 @@
     <AssemblyOriginatorKeyFile>Wintellect.Sterling.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AsyncLock.cs" />
     <Compile Include="CommonAssemblyInfo.cs" />
     <Compile Include="Database\BaseDatabaseInstance.cs" />
     <Compile Include="Database\BaseDriver.cs" />
@@ -84,7 +85,6 @@
     <Compile Include="ISterlingDatabase.cs" />
     <Compile Include="ISterlingDatabaseInstance.cs" />
     <Compile Include="ISterlingDriver.cs" />
-    <Compile Include="ISterlingLock.cs" />
     <Compile Include="ISterlingPropertyConverter.cs" />
     <Compile Include="ISterlingTrigger.cs" />
     <Compile Include="ISterlingTypeResolver.cs" />
@@ -93,7 +93,6 @@
     <Compile Include="Keys\TableKey.cs" />
     <Compile Include="MemoryDriver.cs" />
     <Compile Include="ISterlingPlatformAdapter.cs" />
-    <Compile Include="PlatformAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\AggregateSerializer.cs" />
     <Compile Include="Serialization\BaseSerializer.cs" />
@@ -106,7 +105,6 @@
     <Compile Include="Serialization\SterlingIgnoreAttribute.cs" />
     <Compile Include="SterlingDefaultLogger.cs" />
     <Compile Include="SterlingEngine.cs" />
-    <Compile Include="SterlingFactory.cs" />
     <Compile Include="SterlingLogLevel.cs" />
     <Compile Include="VersionInfo.cs" />
   </ItemGroup>
@@ -114,6 +112,7 @@
     <EmbeddedResource Include="Exceptions\Exceptions.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Exceptions.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

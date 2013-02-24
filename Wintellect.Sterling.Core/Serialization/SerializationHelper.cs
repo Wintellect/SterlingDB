@@ -56,11 +56,16 @@ namespace Wintellect.Sterling.Core.Serialization
 
         private readonly Dictionary<string,Type> _typeRef = new Dictionary<string, Type>();
 
-        private readonly ISterlingDatabaseInstance _database;
+        private readonly BaseDatabaseInstance _databaseInstance;
         private readonly ISterlingSerializer _serializer;
         private readonly LogManager _logManager;
         private readonly Func<string, int> _typeResolver = s => 1;
         private readonly Func<int, string> _typeIndexer = i => string.Empty;
+
+        private ISterlingPlatformAdapter PlatformAdapter
+        {
+            get { return _databaseInstance.Database.Engine.PlatformAdapter; }
+        }
 
         /// <summary>
         ///     Cache the properties for a type so we don't reflect every time
@@ -75,27 +80,27 @@ namespace Wintellect.Sterling.Core.Serialization
 
                 _propertyCache.Add(type, new Dictionary<string, SerializationCache>());
 
-                var isList = PlatformAdapter.Instance.IsAssignableFrom( typeof( IList ), type );
-                var isDictionary = PlatformAdapter.Instance.IsAssignableFrom( typeof( IDictionary ), type );
-                var isArray = PlatformAdapter.Instance.IsAssignableFrom( typeof( Array ), type );
+                var isList = PlatformAdapter.IsAssignableFrom( typeof( IList ), type );
+                var isDictionary = PlatformAdapter.IsAssignableFrom( typeof( IDictionary ), type );
+                var isArray = PlatformAdapter.IsAssignableFrom( typeof( Array ), type );
 
                 var noDerived = isList || isDictionary || isArray; 
 
                 // first fields
-                var fields = from f in PlatformAdapter.Instance.GetFields( type )
+                var fields = from f in PlatformAdapter.GetFields( type )
                              where                              
                              !f.IsStatic &&
                              !f.IsLiteral &&
-                             !f.IsIgnored(_database.IgnoreAttribute) && !f.FieldType.IsIgnored(_database.IgnoreAttribute)
-                             select new PropertyOrField(f);
+                             !f.IsIgnored(_databaseInstance.IgnoreAttribute) && !f.FieldType.IsIgnored(_databaseInstance.IgnoreAttribute, this.PlatformAdapter)
+                             select new PropertyOrField(f, this.PlatformAdapter);
 
-                var properties = from p in PlatformAdapter.Instance.GetProperties( type )
+                var properties = from p in PlatformAdapter.GetProperties( type )
                                  where          
                                  ((noDerived && p.DeclaringType.Equals(type) || !noDerived)) &&
                                  p.CanRead && p.CanWrite &&
-                                 PlatformAdapter.Instance.GetGetMethod( p ) != null && PlatformAdapter.Instance.GetSetMethod( p ) != null
-                                       && !p.IsIgnored(_database.IgnoreAttribute) && !p.PropertyType.IsIgnored(_database.IgnoreAttribute)
-                                 select new PropertyOrField(p);                                 
+                                 PlatformAdapter.GetGetMethod( p ) != null && PlatformAdapter.GetSetMethod( p ) != null
+                                       && !p.IsIgnored(_databaseInstance.IgnoreAttribute) && !p.PropertyType.IsIgnored(_databaseInstance.IgnoreAttribute, this.PlatformAdapter)
+                                 select new PropertyOrField(p, this.PlatformAdapter);                                 
 
                 foreach (var p in properties.Concat(fields))
                 {                    
@@ -120,10 +125,10 @@ namespace Wintellect.Sterling.Core.Serialization
         /// <param name="typeResolver"></param>
         /// <param name="typeIndexer"></param>
         /// <param name="platform"></param>
-        public SerializationHelper(ISterlingDatabaseInstance database, ISterlingSerializer serializer,
+        public SerializationHelper(BaseDatabaseInstance database, ISterlingSerializer serializer,
                                    LogManager logManager, Func<string,int> typeResolver, Func<int,string> typeIndexer)
         {
-            _database = database;
+            _databaseInstance = database;
             _serializer = serializer;
             _logManager = logManager;
             _typeResolver = typeResolver;
@@ -174,15 +179,15 @@ namespace Wintellect.Sterling.Core.Serialization
                 _CacheProperties(type);
             }
 
-            if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( Array ), type ) )
+            if ( PlatformAdapter.IsAssignableFrom( typeof( Array ), type ) )
             {
                 _SaveArray(bw, cache, instance as Array);
             }
-            else if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( IList ), type ) )
+            else if ( PlatformAdapter.IsAssignableFrom( typeof( IList ), type ) )
             {
                 _SaveList(instance as IList, bw, cache);
             }
-            else if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( IDictionary ), type ) )
+            else if ( PlatformAdapter.IsAssignableFrom( typeof( IDictionary ), type ) )
             {
                 _SaveDictionary(instance as IDictionary, bw, cache);              
             }
@@ -254,7 +259,7 @@ namespace Wintellect.Sterling.Core.Serialization
 
         private void _InnerSave(Type type, string propertyName, object instance, BinaryWriter bw,  CycleCache cache)
         {                                    
-            if (_database.IsRegistered(type))
+            if (_databaseInstance.IsRegistered(type))
             {
                 // foreign table - write if it is null or not, and if not null, write the key
                 // then serialize it separately
@@ -276,7 +281,7 @@ namespace Wintellect.Sterling.Core.Serialization
                 return;
             }
 
-            if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( IList ), type ) )
+            if ( PlatformAdapter.IsAssignableFrom( typeof( IList ), type ) )
             {
                 bw.Write(propertyName + PROPERTY_VALUE_SEPARATOR);
                 bw.Write(_typeResolver(type.AssemblyQualifiedName));
@@ -284,7 +289,7 @@ namespace Wintellect.Sterling.Core.Serialization
                 return;
             }
 
-            if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( IDictionary ), type ) )
+            if ( PlatformAdapter.IsAssignableFrom( typeof( IDictionary ), type ) )
             {
                 bw.Write(propertyName + PROPERTY_VALUE_SEPARATOR);
                 bw.Write(_typeResolver(type.AssemblyQualifiedName));
@@ -338,7 +343,7 @@ namespace Wintellect.Sterling.Core.Serialization
 
             if (foreignTable == null) return;
 
-            var task = _database.SaveAsync(foreignTable.GetType(), foreignTable.GetType(),foreignTable, cache);
+            var task = _databaseInstance._Save<object>(foreignTable.GetType(), foreignTable.GetType(),foreignTable, cache);
 
             //TODO: fix this
             if( task.Wait( TimeSpan.FromSeconds( 10 ) ) == false )
@@ -505,9 +510,9 @@ namespace Wintellect.Sterling.Core.Serialization
                 }
             }            
 
-            if (_database.IsRegistered(typeResolved))
+            if (_databaseInstance.IsRegistered(typeResolved))
             {
-                var keyType = _database.GetKeyType(typeResolved);
+                var keyType = _databaseInstance.GetKeyType(typeResolved);
                 var key = _serializer.Deserialize(keyType, br);
 
                 var cached = cache.CheckKey(keyType, key);
@@ -516,7 +521,7 @@ namespace Wintellect.Sterling.Core.Serialization
                     return new KeyValuePair<string, object>(propertyName, cached);
                 }
 
-                var task = _database.LoadAsync(typeResolved, key, cache);
+                var task = _databaseInstance._Load<object>(typeResolved, key, cache);
 
                 //TODO: fix this
                 if ( task.Wait( TimeSpan.FromSeconds( 10 ) ) == false )
@@ -537,7 +542,7 @@ namespace Wintellect.Sterling.Core.Serialization
             }
 
 
-            if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( Array ), typeResolved ) )
+            if ( PlatformAdapter.IsAssignableFrom( typeof( Array ), typeResolved ) )
             {                
                 var count = br.ReadInt32();
                 var array = Array.CreateInstance(typeResolved.GetElementType(), count);
@@ -549,13 +554,13 @@ namespace Wintellect.Sterling.Core.Serialization
                 return new KeyValuePair<string, object>(propertyName, array);
             }
 
-            if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( IList ), typeResolved ) )
+            if ( PlatformAdapter.IsAssignableFrom( typeof( IList ), typeResolved ) )
             {
                 var list = Activator.CreateInstance(typeResolved) as IList;
                 return new KeyValuePair<string, object>(propertyName, _LoadList(br, cache, list));              
             }
 
-            if ( PlatformAdapter.Instance.IsAssignableFrom( typeof( IDictionary ), typeResolved ) )
+            if ( PlatformAdapter.IsAssignableFrom( typeof( IDictionary ), typeResolved ) )
             {
                 var dictionary = Activator.CreateInstance(typeResolved) as IDictionary;
                 return new KeyValuePair<string, object>(propertyName, _LoadDictionary(br, cache, dictionary));
@@ -589,7 +594,7 @@ namespace Wintellect.Sterling.Core.Serialization
                 {
                     // unknown property, see if it should be converted or ignored
                     ISterlingPropertyConverter propertyConverter;
-                    if (_database.TryGetPropertyConverter(typeResolved, out propertyConverter))
+                    if (_databaseInstance.TryGetPropertyConverter(typeResolved, out propertyConverter))
                     {
                         propertyConverter.SetValue(instance, propertyPair.Key, propertyPair.Value);
                     }

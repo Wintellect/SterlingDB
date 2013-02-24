@@ -2,14 +2,17 @@
 #if NETFX_CORE
 using Wintellect.Sterling.WinRT.WindowsStorage;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using Wintellect.Sterling.WinRT;
 #elif SILVERLIGHT
 using Microsoft.Phone.Testing;
 using Wintellect.Sterling.WP8.IsolatedStorage;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Wintellect.Sterling.WP8;
 #else
-using System;
+using Wintellect.Sterling.Server;
 using Wintellect.Sterling.Server.FileSystem;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Wintellect.Sterling.Server;
 #endif
 
 using System;
@@ -28,26 +31,25 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestTableDefinitionAltDriver : TestTableDefinition
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
 
-        protected override ISterlingDriver GetDriver( string databaseName, ISterlingSerializer serializer,
-                                                      Action<SterlingLogLevel, string, Exception> log )
+        protected override ISterlingDriver GetDriver( string test, string databaseName, ISterlingSerializer serializer )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( databaseName, serializer, log );
+            return new WindowsStorageDriver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( databaseName, serializer, log );
+            return new IsolatedStorageDriver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
 #else
-            return new FileSystemDriver( databaseName, serializer, log );
+            return new FileSystemDriver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
 #endif
         }
     }
@@ -58,10 +60,9 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestTableDefinition : TestBase
     {
-        protected virtual ISterlingDriver GetDriver( string databaseName, ISterlingSerializer serializer,
-                                                     Action<SterlingLogLevel, string, Exception> log )
+        protected virtual ISterlingDriver GetDriver( string test, string databaseName, ISterlingSerializer serializer )
         {
-            return new MemoryDriver( databaseName, serializer, log );
+            return new MemoryDriver( test + databaseName, serializer );
         }
 
         private readonly TestModel[] _models = new[]
@@ -73,6 +74,8 @@ namespace Wintellect.Sterling.Test.Database
         private TableDefinition<TestModel, int> _target;
         private readonly ISterlingDatabaseInstance _testDatabase = new TestDatabaseInterfaceInstance();
         private int _testAccessCount;
+
+        public TestContext TestContext { get; set; }
 
         /// <summary>
         ///     Fetcher - also flag the fetch
@@ -88,11 +91,11 @@ namespace Wintellect.Sterling.Test.Database
         [TestInitialize]
         public void TestInit()
         {
-            var serializer = new AggregateSerializer();
+            var serializer = new AggregateSerializer( new PlatformAdapter() );
             serializer.AddSerializer(new DefaultSerializer());
-            serializer.AddSerializer(new ExtendedSerializer());
+            serializer.AddSerializer(new ExtendedSerializer( new PlatformAdapter() ));
             _testAccessCount = 0;
-            _target = new TableDefinition<TestModel, int>(GetDriver(_testDatabase.Name, serializer, SterlingFactory.GetLogger().Log),
+            _target = new TableDefinition<TestModel, int>(GetDriver(TestContext.TestName, _testDatabase.Name, serializer),
                                                         _GetTestModelByKey, t => t.Key);
         }        
 

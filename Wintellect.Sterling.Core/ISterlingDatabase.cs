@@ -9,29 +9,12 @@ namespace Wintellect.Sterling.Core
     /// <summary>
     ///     Sterling database interface
     /// </summary>
-    public interface ISterlingDatabase : ISterlingLock 
+    public interface ISterlingDatabase 
     {
-        /// <summary>
-        ///     Registers a logger (multiple loggers may be registered)
-        /// </summary>
-        /// <param name="log">The call for logging</param>
-        /// <returns>A unique identifier for the logger</returns>
-        Guid RegisterLogger(Action<SterlingLogLevel, string, Exception> log);        
+        SterlingEngine Engine { get; }
 
-        /// <summary>
-        ///     Unhooks a logging mechanism
-        /// </summary>
-        /// <param name="guid">The guid</param>
-        void UnhookLogger(Guid guid);
+        LogManager LogManager { get; }
         
-        /// <summary>
-        ///     Log a message 
-        /// </summary>
-        /// <param name="level">The level</param>
-        /// <param name="message">The message data</param>
-        /// <param name="exception">The exception</param>
-        void Log(SterlingLogLevel level, string message, Exception exception);
-
         /// <summary>
         ///     Backup the database
         /// </summary>

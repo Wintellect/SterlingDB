@@ -10,8 +10,9 @@ namespace Wintellect.Sterling.Core.Serialization
     {
         private readonly PropertyInfo _propertyInfo;
         private readonly FieldInfo _fieldInfo;
+        private readonly ISterlingPlatformAdapter _platformAdapter;
 
-        public PropertyOrField(object infoObject)
+        public PropertyOrField(object infoObject, ISterlingPlatformAdapter platformAdapter)
         {
             if (infoObject == null)
             {
@@ -30,6 +31,8 @@ namespace Wintellect.Sterling.Core.Serialization
             {
                 throw new ArgumentException(string.Format("Invalid type: {0}", infoObject.GetType()), "infoObject");
             }
+
+            _platformAdapter = platformAdapter;
         }
 
         public Type PfType
@@ -49,7 +52,7 @@ namespace Wintellect.Sterling.Core.Serialization
 
         public object GetValue(object obj)
         {
-            return _propertyInfo != null ? PlatformAdapter.Instance.GetGetMethod( _propertyInfo ).Invoke(obj, new object[] { }) : _fieldInfo.GetValue(obj);
+            return _propertyInfo != null ? _platformAdapter.GetGetMethod( _propertyInfo ).Invoke(obj, new object[] { }) : _fieldInfo.GetValue(obj);
         }
 
         public Action<object, object> Setter
@@ -58,7 +61,7 @@ namespace Wintellect.Sterling.Core.Serialization
             {
                 if (_propertyInfo != null)
                 {
-                    return (obj, prop) => PlatformAdapter.Instance.GetSetMethod( _propertyInfo ).Invoke(obj, new[] { prop });
+                    return (obj, prop) => _platformAdapter.GetSetMethod( _propertyInfo ).Invoke(obj, new[] { prop });
                 }
 
                 return (obj, prop) => _fieldInfo.SetValue(obj, prop);
@@ -71,7 +74,7 @@ namespace Wintellect.Sterling.Core.Serialization
             {
                 if (_propertyInfo != null)
                 {
-                    return obj => PlatformAdapter.Instance.GetGetMethod( _propertyInfo ).Invoke(obj, new object[] { });
+                    return obj => _platformAdapter.GetGetMethod( _propertyInfo ).Invoke(obj, new object[] { });
                 }
 
                 return obj => _fieldInfo.GetValue(obj);

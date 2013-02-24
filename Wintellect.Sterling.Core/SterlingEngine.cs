@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using Wintellect.Sterling.Core.Database;
 
 namespace Wintellect.Sterling.Core
@@ -8,29 +9,35 @@ namespace Wintellect.Sterling.Core
     /// </summary>
     public class SterlingEngine : IDisposable
     {
+        private Lazy<SterlingDatabase> _database = null;
+
         /// <summary>
         ///     The database engine
         /// </summary>
-        public ISterlingDatabase SterlingDatabase { get; private set; }
+        public ISterlingDatabase SterlingDatabase
+        {
+            get { return _database.Value; }
+        }
 
-        /// <summary>
-        ///     True if it's been activated
-        /// </summary>
-        private bool _activated; 
+        public ISterlingPlatformAdapter PlatformAdapter { get; private set; }
+
+        public void Reset()
+        {
+            _database = new Lazy<SterlingDatabase>( () => new SterlingDatabase( this ) );
+        }
 
         /// <summary>
         ///     Constructor takes in the database 
         /// </summary>
         public SterlingEngine( ISterlingPlatformAdapter platform )
         {
-            PlatformAdapter.Instance = platform;
-            SterlingDatabase = SterlingFactory.GetDatabaseEngine();            
+            this.PlatformAdapter = platform;
+            _database = new Lazy<SterlingDatabase>( () => new SterlingDatabase( this ) );
         }
 
         public void Activate()
         {
-            ((SterlingDatabase)SterlingDatabase).Activate();
-            _activated = true;
+            _database.Value.Activate();
         }
 
         /// <summary>
@@ -38,10 +45,7 @@ namespace Wintellect.Sterling.Core
         /// </summary>
         public void Dispose()
         {
-            if (_activated)
-            {                
-                ((SterlingDatabase)SterlingDatabase).Deactivate();
-            }
+            _database.Value.Deactivate();
         }
     }
 }

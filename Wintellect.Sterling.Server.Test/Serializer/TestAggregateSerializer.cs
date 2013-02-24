@@ -3,9 +3,13 @@ using System.IO;
 using System.Text;
 #if SILVERLIGHT
 using Microsoft.Phone.Testing;
+using Wintellect.Sterling.WP8;
+#elif !NETFX_CORE
+using Wintellect.Sterling.Server;
 #endif
 #if NETFX_CORE
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using Wintellect.Sterling.WinRT;
 #else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
@@ -38,7 +42,7 @@ namespace Wintellect.Sterling.Test.Serializer
         [TestInitialize]
         public void Init()
         {
-            var serializer = new AggregateSerializer();
+            var serializer = new AggregateSerializer( new PlatformAdapter() );
             serializer.AddSerializer(new DefaultSerializer());
             serializer.AddSerializer(new TestSerializer());
             _target = serializer;            

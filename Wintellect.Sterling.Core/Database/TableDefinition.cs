@@ -123,17 +123,14 @@ namespace Wintellect.Sterling.Core.Database
         /// <summary>
         ///     Refresh key list
         /// </summary>
-        public Task RefreshAsync()
+        public async Task RefreshAsync()
         {
-            return Task.Factory.StartNew( () =>
-            {
-                KeyList.RefreshAsync().Wait();
+            await KeyList.RefreshAsync();
 
-                foreach ( var index in Indexes.Values )
-                {
-                    index.RefreshAsync().Wait();
-                }
-            }, TaskCreationOptions.AttachedToParent );
+            foreach ( var index in Indexes.Values )
+            {
+                await index.RefreshAsync();
+            }
         }
 
         /// <summary>

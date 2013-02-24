@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         private const string BASE = "Sterling/";
         private readonly List<Type> _tables = new List<Type>();
         private bool _dirtyType;
-        private readonly Dictionary<string,byte[]> _saveCache = new Dictionary<string, byte[]>();
+        private readonly AsyncLock _lock = new AsyncLock();
         
         public IsolatedStorageDriver() : this(BASE, false)
         {            
@@ -54,8 +55,8 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
 
         public void Initialize(string basePath, bool siteWide)
         {
-            _iso = new IsoStorageHelper(siteWide);            
-            _basePath = basePath; 
+            _iso = new IsoStorageHelper(siteWide);
+            _basePath = basePath.EndsWith( "/" ) ? basePath : basePath + "/";
         }
 
         /// <summary>
@@ -64,28 +65,27 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">Type of the parent table</param>
         /// <param name="keyType">Type of the key</param>
         /// <param name="keyMap">Key map</param>
-        public override Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
+        public override async Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
-            return Task.Factory.StartNew( () =>
+            _iso.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
+
+            using ( await _lock.LockAsync() )
+            {
+                var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+
+                using ( var keyFile = _iso.GetWriter( keyPath ) )
                 {
-                    _iso.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
-                    var pathLock = PathLock.GetLock( type.FullName );
-                    lock ( pathLock )
+                    keyFile.Write( keyMap.Count );
+                
+                    foreach ( var key in keyMap.Keys )
                     {
-                        var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
-                        using ( var keyFile = _iso.GetWriter( keyPath ) )
-                        {
-                            keyFile.Write( keyMap.Count );
-                            foreach ( var key in keyMap.Keys )
-                            {
-                                DatabaseSerializer.Serialize( key, keyFile );
-                                keyFile.Write( (int) keyMap[ key ] );
-                            }
-                        }
+                        DatabaseSerializer.Serialize( key, keyFile );
+                        keyFile.Write( (int) keyMap[ key ] );
                     }
-                    
-                    SerializeTypesAsync();
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
+
+            await SerializeTypesAsync();
         }
 
         /// <summary>
@@ -95,28 +95,26 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="keyType">Type of the key</param>
         /// <param name="dictionary">Empty dictionary</param>
         /// <returns>The key list</returns>
-        public override Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary dictionary)
+        public override async Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary dictionary)
         {
-            return Task.Factory.StartNew( () =>
+            var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+
+            if ( _iso.FileExists( keyPath ) )
+            {
+                using ( await _lock.LockAsync() )
                 {
-                    var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
-                    if ( _iso.FileExists( keyPath ) )
+                    using ( var keyFile = _iso.GetReader( keyPath ) )
                     {
-                        var pathLock = PathLock.GetLock( type.FullName );
-                        lock ( pathLock )
+                        var count = keyFile.ReadInt32();
+
+                        for ( var x = 0; x < count; x++ )
                         {
-                            using ( var keyFile = _iso.GetReader( keyPath ) )
-                            {
-                                var count = keyFile.ReadInt32();
-                                for ( var x = 0; x < count; x++ )
-                                {
-                                    dictionary.Add( DatabaseSerializer.Deserialize( keyType, keyFile ), keyFile.ReadInt32() );
-                                }
-                            }
+                            dictionary.Add( DatabaseSerializer.Deserialize( keyType, keyFile ), keyFile.ReadInt32() );
                         }
                     }
-                    return dictionary;
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
+            return dictionary;
         }
 
         /// <summary>
@@ -127,25 +125,23 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>
         /// <param name="indexMap">The index map</param>
-        public override Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
+        public override async Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
         {
-            return Task.Factory.StartNew( () =>
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+
+            using ( await _lock.LockAsync() )
+            {
+                using ( var indexFile = _iso.GetWriter( indexPath ) )
                 {
-                    var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
-                    var pathLock = PathLock.GetLock( type.FullName );
-                    lock ( pathLock )
+                    indexFile.Write( indexMap.Count );
+
+                    foreach ( var index in indexMap )
                     {
-                        using ( var indexFile = _iso.GetWriter( indexPath ) )
-                        {
-                            indexFile.Write( indexMap.Count );
-                            foreach ( var index in indexMap )
-                            {
-                                DatabaseSerializer.Serialize( index.Value, indexFile );
-                                DatabaseSerializer.Serialize( index.Key, indexFile );
-                            }
-                        }
+                        DatabaseSerializer.Serialize( index.Value, indexFile );
+                        DatabaseSerializer.Serialize( index.Key, indexFile );
                     }
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
         }
 
         /// <summary>
@@ -157,26 +153,24 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>
         /// <param name="indexMap">The index map</param>        
-        public override Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
+        public override async Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
         {
-            return Task.Factory.StartNew( () =>
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+
+            using ( await _lock.LockAsync() )
+            {
+                using ( var indexFile = _iso.GetWriter( indexPath ) )
                 {
-                    var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
-                    var pathLock = PathLock.GetLock( type.FullName );
-                    lock ( pathLock )
+                    indexFile.Write( indexMap.Count );
+
+                    foreach ( var index in indexMap )
                     {
-                        using ( var indexFile = _iso.GetWriter( indexPath ) )
-                        {
-                            indexFile.Write( indexMap.Count );
-                            foreach ( var index in indexMap )
-                            {
-                                DatabaseSerializer.Serialize( index.Value.Item1, indexFile );
-                                DatabaseSerializer.Serialize( index.Value.Item2, indexFile );
-                                DatabaseSerializer.Serialize( index.Key, indexFile );
-                            }
-                        }
+                        DatabaseSerializer.Serialize( index.Value.Item1, indexFile );
+                        DatabaseSerializer.Serialize( index.Value.Item2, indexFile );
+                        DatabaseSerializer.Serialize( index.Key, indexFile );
                     }
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
         }
 
         /// <summary>
@@ -187,31 +181,31 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>        
         /// <returns>The index map</returns>
-        public override Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
+        public override async Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
         {
-            return Task.Factory.StartNew( () =>
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+
+            var dictionary = new Dictionary<TKey, TIndex>();
+            
+            if ( _iso.FileExists( indexPath ) )
+            {
+                using ( await _lock.LockAsync() )
                 {
-                    var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
-                    var dictionary = new Dictionary<TKey, TIndex>();
-                    if ( _iso.FileExists( indexPath ) )
+                    using ( var indexFile = _iso.GetReader( indexPath ) )
                     {
-                        var pathLock = PathLock.GetLock( type.FullName );
-                        lock ( pathLock )
+                        var count = indexFile.ReadInt32();
+
+                        for ( var x = 0; x < count; x++ )
                         {
-                            using ( var indexFile = _iso.GetReader( indexPath ) )
-                            {
-                                var count = indexFile.ReadInt32();
-                                for ( var x = 0; x < count; x++ )
-                                {
-                                    var index = (TIndex) DatabaseSerializer.Deserialize( typeof( TIndex ), indexFile );
-                                    var key = (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile );
-                                    dictionary.Add( key, index );
-                                }
-                            }
+                            var index = (TIndex) DatabaseSerializer.Deserialize( typeof( TIndex ), indexFile );
+                            var key = (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile );
+                        
+                            dictionary.Add( key, index );
                         }
                     }
-                    return dictionary;
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
+            return dictionary;
         }
 
         /// <summary>
@@ -223,40 +217,41 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">The type of the parent table</param>
         /// <param name="indexName">The name of the index</param>        
         /// <returns>The index map</returns>        
-        public override Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
+        public override async Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
         {
-            return Task.Factory.StartNew( () =>
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+
+            var dictionary = new Dictionary<TKey, Tuple<TIndex1, TIndex2>>();
+            
+            if ( _iso.FileExists( indexPath ) )
+            {
+                using ( await _lock.LockAsync() )
                 {
-                    var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
-                    var dictionary = new Dictionary<TKey, Tuple<TIndex1, TIndex2>>();
-                    if ( _iso.FileExists( indexPath ) )
+                    using ( var indexFile = _iso.GetReader( indexPath ) )
                     {
-                        var pathLock = PathLock.GetLock( type.FullName );
-                        lock ( pathLock )
+                        var count = indexFile.ReadInt32();
+
+                        for ( var x = 0; x < count; x++ )
                         {
-                            using ( var indexFile = _iso.GetReader( indexPath ) )
-                            {
-                                var count = indexFile.ReadInt32();
-                                for ( var x = 0; x < count; x++ )
-                                {
-                                    var index = Tuple.Create(
-                                        (TIndex1) DatabaseSerializer.Deserialize( typeof( TIndex1 ), indexFile ),
-                                        (TIndex2) DatabaseSerializer.Deserialize( typeof( TIndex2 ), indexFile ) );
-                                    var key = (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile );
-                                    dictionary.Add( key, index );
-                                }
-                            }
+                            var index = Tuple.Create(
+                                (TIndex1) DatabaseSerializer.Deserialize( typeof( TIndex1 ), indexFile ),
+                                (TIndex2) DatabaseSerializer.Deserialize( typeof( TIndex2 ), indexFile ) );
+                        
+                            var key = (TKey) DatabaseSerializer.Deserialize( typeof( TKey ), indexFile );
+                            
+                            dictionary.Add( key, index );
                         }
                     }
-                    return dictionary;
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
+            return dictionary;
         }
 
         /// <summary>
         ///     Publish the list of tables
         /// </summary>
         /// <param name="tables">The list of tables</param>
-        public override void PublishTables(Dictionary<Type, ITableDefinition> tables)
+        public override async void PublishTables( Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
             _iso.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
 
@@ -267,21 +262,21 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             using (var typeFile = _iso.GetReader(typePath))
             {
                 var count = typeFile.ReadInt32();
+
                 for (var x = 0; x < count; x++)
                 {
                     var fullTypeName = typeFile.ReadString();
-                    var tableType = TableTypeResolver.ResolveTableType(fullTypeName);
+                    var tableType = resolveType(fullTypeName);
                     if (tableType == null)
                     {
                         throw new SterlingTableNotFoundException(fullTypeName, DatabaseName);
                     }
 
-                    GetTypeIndexAsync(tableType.AssemblyQualifiedName).Wait();
+                    await GetTypeIndexAsync(tableType.AssemblyQualifiedName);
                 }
             }
 
-            var pathLock = PathLock.GetLock(DatabaseName);
-            lock (pathLock)
+            using ( await _lock.LockAsync() )
             {
                 foreach (var type in tables.Keys)
                 {
@@ -294,24 +289,22 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <summary>
         ///     Serialize the type master
         /// </summary>
-        public override Task SerializeTypesAsync()
+        public override async Task SerializeTypesAsync()
         {
-            return Task.Factory.StartNew( () =>
+            using ( await _lock.LockAsync() )
+            {
+                var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseName, this );
+            
+                using ( var typeFile = _iso.GetWriter( typePath ) )
                 {
-                    var pathLock = PathLock.GetLock( TypeIndex.GetType().FullName );
-                    lock ( pathLock )
+                    typeFile.Write( TypeIndex.Count );
+
+                    foreach ( var type in TypeIndex )
                     {
-                        var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseName, this );
-                        using ( var typeFile = _iso.GetWriter( typePath ) )
-                        {
-                            typeFile.Write( TypeIndex.Count );
-                            foreach ( var type in TypeIndex )
-                            {
-                                typeFile.Write( type );
-                            }
-                        }
+                        typeFile.Write( type );
                     }
-                }, TaskCreationOptions.AttachedToParent );
+                }
+            }
         }
 
         /// <summary>
@@ -319,21 +312,18 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// </summary>
         /// <param name="type">The type</param>
         /// <returns>The type</returns>
-        public override Task<int> GetTypeIndexAsync(string type)
+        public override async Task<int> GetTypeIndexAsync(string type)
         {
-            return Task.Factory.StartNew( () =>
+            using ( await _lock.LockAsync() )
+            {
+                if ( !TypeIndex.Contains( type ) )
                 {
-                    var pathLock = PathLock.GetLock( TypeIndex.GetType().FullName );
-                    lock ( pathLock )
-                    {
-                        if ( !TypeIndex.Contains( type ) )
-                        {
-                            TypeIndex.Add( type );
-                            _dirtyType = true;
-                        }
-                    }
-                    return TypeIndex.IndexOf( type );
-                }, TaskCreationOptions.AttachedToParent );
+                    TypeIndex.Add( type );
+                    _dirtyType = true;
+                }
+            }
+
+            return TypeIndex.IndexOf( type );
         }
 
         /// <summary>
@@ -343,7 +333,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <returns>The type</returns>
         public override Task<string> GetTypeAtIndexAsync(int index)
         {
-            return Task.Factory.StartNew( () => TypeIndex[ index ], TaskCreationOptions.AttachedToParent );
+            return Task.FromResult( TypeIndex[ index ] );
         }
         
         /// <summary>
@@ -352,45 +342,25 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">Type of the parent</param>
         /// <param name="keyIndex">Index for the key</param>
         /// <param name="bytes">The byte stream</param>
-        public override Task SaveAsync(Type type, int keyIndex, byte[] bytes)
+        public override async Task SaveAsync(Type type, int keyIndex, byte[] bytes)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseName, type, this, keyIndex );
-                    _iso.EnsureDirectory( instanceFolder );
-                    var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseName, type, this, keyIndex );
 
-                    lock ( ( (ICollection) _saveCache ).SyncRoot )
-                    {
-                        _saveCache[ instancePath ] = bytes;
-                    }
+            _iso.EnsureDirectory( instanceFolder );
+            
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
 
-                    // lock on this while saving, but remember that anyone else loading can now grab the
-                    // copy 
-                    lock ( PathLock.GetLock( instancePath ) )
-                    {
-                        using (
-                            var instanceFile =
-                                _iso.GetWriter( instancePath ) )
-                        {
-                            instanceFile.Write( bytes );
-                        }
+            using ( await _lock.LockAsync() )
+            using ( var instanceFile = _iso.GetWriter( instancePath ) )
+            {
+                instanceFile.Write( bytes );
+            }
 
-                        lock ( ( (ICollection) _saveCache ).SyncRoot )
-                        {
-                            if ( _saveCache.ContainsKey( instancePath ) )
-                            {
-                                _saveCache.Remove( instancePath );
-                            }
-                        }
-                    }
+            if ( !_dirtyType ) return;
 
-                    if ( !_dirtyType ) return;
+            _dirtyType = false;
 
-                    _dirtyType = false;
-
-                    SerializeTypesAsync();
-                }, TaskCreationOptions.AttachedToParent );
+            await SerializeTypesAsync();
         }   
             
         /// <summary>
@@ -399,29 +369,14 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">The type of the parent</param>
         /// <param name="keyIndex">The index of the key</param>
         /// <returns>The byte stream</returns>
-        public override Task<BinaryReader> LoadAsync(Type type, int keyIndex)
+        public override async Task<BinaryReader> LoadAsync(Type type, int keyIndex)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
 
-                    // if a copy is available, return that - it's our best bet
-                    lock ( ( (ICollection) _saveCache ).SyncRoot )
-                    {
-                        if ( _saveCache.ContainsKey( instancePath ) )
-                        {
-                            return new BinaryReader( new MemoryStream( _saveCache[ instancePath ] ) );
-                        }
-                    }
-
-                    // otherwise let's wait for it to be released and grab it from disk
-                    lock ( PathLock.GetLock( instancePath ) )
-                    {
-                        return _iso.FileExists( instancePath )
-                                   ? _iso.GetReader( instancePath )
-                                   : new BinaryReader( new MemoryStream() );
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            using ( await _lock.LockAsync() )
+            {
+                return _iso.FileExists( instancePath ) ? _iso.GetReader( instancePath ) : new BinaryReader( new MemoryStream() );
+            }
         }
 
         /// <summary>
@@ -429,49 +384,42 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// </summary>
         /// <param name="type">The type of the parent</param>
         /// <param name="keyIndex">The index of the key</param>
-        public override Task DeleteAsync(Type type, int keyIndex)
+        public override async Task DeleteAsync(Type type, int keyIndex)
         {
-            return Task.Factory.StartNew( () =>
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+
+            using ( await _lock.LockAsync() )
+            {
+                if ( _iso.FileExists( instancePath ) )
                 {
-                    var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
-                    lock ( PathLock.GetLock( instancePath ) )
-                    {
-                        if ( _iso.FileExists( instancePath ) )
-                        {
-                            _iso.Delete( instancePath );
-                        }
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+                    _iso.Delete( instancePath );
+                }
+            }
         }
 
         /// <summary>
         ///     Truncate a type
         /// </summary>
         /// <param name="type">The type to truncate</param>
-        public override Task TruncateAsync(Type type)
+        public override async Task TruncateAsync(Type type)
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseName, type, this );
-                    lock ( PathLock.GetLock( type.FullName ) )
-                    {
-                        _iso.Purge( folderPath );
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseName, type, this );
+
+            using ( await _lock.LockAsync() )
+            {
+                _iso.Purge( folderPath );
+            }
         }
 
         /// <summary>
         ///     Purge the database
         /// </summary>
-        public override Task PurgeAsync()
+        public override async Task PurgeAsync()
         {
-            return Task.Factory.StartNew( () =>
-                {
-                    lock ( PathLock.GetLock( DatabaseName ) )
-                    {
-                        _iso.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseName, this ) );
-                    }
-                }, TaskCreationOptions.AttachedToParent );
+            using ( await _lock.LockAsync() )
+            {
+                _iso.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseName, this ) );
+            }
         }        
     }
 }

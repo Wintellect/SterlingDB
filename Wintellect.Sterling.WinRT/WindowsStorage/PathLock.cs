@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Wintellect.Sterling.Core;
 
 namespace Wintellect.Sterling.WinRT.WindowsStorage
 {

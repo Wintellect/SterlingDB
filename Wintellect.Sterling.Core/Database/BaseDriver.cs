@@ -113,7 +113,7 @@ namespace Wintellect.Sterling.Core.Database
         ///     Publish the list of tables
         /// </summary>
         /// <param name="tables">The list of tables</param>
-        public abstract void PublishTables(Dictionary<Type, ITableDefinition> tables);
+        public abstract void PublishTables( Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType );
 
         /// <summary>
         ///     Serialize the type master
@@ -124,9 +124,9 @@ namespace Wintellect.Sterling.Core.Database
         ///     Deserialize the type master
         /// </summary>
         /// <param name="types">The list of types</param>
-        public Task DeserializeTypesAsync(IList<string> types)
+        public async Task DeserializeTypesAsync(IList<string> types)
         {
-            return Task.Factory.StartNew( () => TypeIndex = new List<string>( types ), TaskCreationOptions.AttachedToParent );
+            TypeIndex = new List<string>( types );
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <returns></returns>
         public Task<IList<string>> GetTypesAsync()
         {
-            return Task.Factory.StartNew( () => (IList<string>) new List<string>( TypeIndex ), TaskCreationOptions.AttachedToParent );
+            return Task.FromResult( (IList<string>) new List<string>( TypeIndex ) );
         }
 
         /// <summary>
@@ -155,7 +155,7 @@ namespace Wintellect.Sterling.Core.Database
                     }
                     return TypeIndex.IndexOf( type );
                 }
-            }, TaskCreationOptions.AttachedToParent );
+            } );
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <returns>The type</returns>
         public virtual Task<string> GetTypeAtIndexAsync(int index)
         {
-            return Task.Factory.StartNew( () => TypeIndex[ index ], TaskCreationOptions.AttachedToParent );
+            return Task.FromResult( TypeIndex[ index ] );
         }
 
         /// <summary>

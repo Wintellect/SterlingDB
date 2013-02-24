@@ -18,7 +18,6 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         private const string BASE = "Sterling/";
         private readonly List<Type> _tables = new List<Type>();
         private bool _dirtyType;
-        private readonly Dictionary<string,byte[]> _saveCache = new Dictionary<string, byte[]>();
         
         public WindowsStorageDriver() : this(BASE)
         {            
@@ -45,7 +44,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
         public void Initialize(string basePath)
         {
-            _basePath = basePath; 
+            _basePath = basePath.EndsWith( "/" ) ? basePath : basePath + "/";
         }
 
         /// <summary>
@@ -253,7 +252,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         ///     Publish the list of tables
         /// </summary>
         /// <param name="tables">The list of tables</param>
-        public override async void PublishTables(Dictionary<Type, ITableDefinition> tables)
+        public override async void PublishTables(Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
             await StorageHelper.EnsureFolderExistsAsync(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
 
@@ -268,7 +267,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
                 for (var x = 0; x < count; x++)
                 {
                     var fullTypeName = typeFile.ReadString();
-                    var tableType = TableTypeResolver.ResolveTableType(fullTypeName);
+                    var tableType = resolveType(fullTypeName);
                 
                     if (tableType == null)
                     {
@@ -360,11 +359,6 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
 
-            lock ( ( (ICollection) _saveCache ).SyncRoot )
-            {
-                _saveCache[ instancePath ] = bytes;
-            }
-
             // lock on this while saving, but remember that anyone else loading can now grab the
             // copy 
             using ( await PathLock.GetLock( instancePath ).LockAsync() )
@@ -372,14 +366,6 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
                 using ( var instanceFile = await StorageHelper.GetWriterForFileAsync( instancePath ) )
                 {
                     instanceFile.Write( bytes );
-                }
-
-                lock ( ( (ICollection) _saveCache ).SyncRoot )
-                {
-                    if ( _saveCache.ContainsKey( instancePath ) )
-                    {
-                        _saveCache.Remove( instancePath );
-                    }
                 }
             }
 
@@ -399,15 +385,6 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         public override async Task<BinaryReader> LoadAsync(Type type, int keyIndex)
         {
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
-
-            // if a copy is available, return that - it's our best bet
-            lock ( ( (ICollection) _saveCache ).SyncRoot )
-            {
-                if ( _saveCache.ContainsKey( instancePath ) )
-                {
-                    return new BinaryReader( new MemoryStream( _saveCache[ instancePath ] ) );
-                }
-            }
 
             // otherwise let's wait for it to be released and grab it from disk
             using ( await PathLock.GetLock( instancePath ).LockAsync() )

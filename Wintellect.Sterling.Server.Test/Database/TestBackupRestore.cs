@@ -25,14 +25,14 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestBackupRestoreAltDriver : TestBackupRestore
     {
-        protected override ISterlingDriver GetDriver()
+        protected override ISterlingDriver GetDriver( string test )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver();
+            return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver();
+            return new IsolatedStorageDriver( test );
 #else
-            return new FileSystemDriver();
+            return new FileSystemDriver( test );
 #endif
         }
     }
@@ -46,7 +46,8 @@ namespace Wintellect.Sterling.Test.Database
     {
         private SterlingEngine _engine;
         private ISterlingDatabaseInstance _databaseInstance;
-        private ISterlingDriver _driver;
+
+        public TestContext TestContext { get; set; }
 
         [TestCleanup]
         public void TestCleanup()
@@ -59,15 +60,12 @@ namespace Wintellect.Sterling.Test.Database
         [TestMethod]
         public void TestBackupAndRestore()
         {
-            if (_driver == null)
-            {
-                _driver = GetDriver();
-            }
+            var driver = GetDriver( TestContext.TestName );
 
             // activate the engine and store the data
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(driver);
 
             // test saving and reloading
             var expected = TestModel.MakeTestModel();
@@ -105,7 +103,7 @@ namespace Wintellect.Sterling.Test.Database
             
             // activate it and grab the database again
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(driver);
 
             // restore it
             _engine.SterlingDatabase.RestoreAsync<TestDatabaseInstance>(new BinaryReader(new MemoryStream(databaseBuffer))).Wait();
@@ -118,7 +116,7 @@ namespace Wintellect.Sterling.Test.Database
 
             // activate it and grab the database again
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(_driver);            
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(driver);            
 
             actual = _databaseInstance.LoadAsync<TestModel>(expected.Key).Result;
 

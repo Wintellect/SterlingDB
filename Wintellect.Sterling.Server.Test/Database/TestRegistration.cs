@@ -48,20 +48,6 @@ namespace Wintellect.Sterling.Test.Database
             
                 Assert.AreEqual("TestDatabase", testDb2.Name, "Incorrect database name.");
 
-                // test duplicate registration
-                raiseError = false;
-
-                try
-                {
-                    db.RegisterDatabase<TestDatabaseInstance>();
-                }
-                catch(SterlingDuplicateDatabaseException)
-                {
-                    raiseError = true;
-                }
-
-                Assert.IsTrue(raiseError, "Sterling did not capture the duplicate database.");
-
                 // test bad database (no table definitions) 
                 raiseError = false;
 

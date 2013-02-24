@@ -11,18 +11,20 @@ namespace Wintellect.Sterling.Core
     {
         private Guid _guid = Guid.Empty;
         private readonly SterlingLogLevel _minimumLevel;
+        private readonly ISterlingDatabase _database;
 
         /// <summary>
         ///     Create 
         /// </summary>
         /// <param name="minimumLevel">Minimum level to debug</param>
-        public SterlingDefaultLogger(SterlingLogLevel minimumLevel)
+        public SterlingDefaultLogger( ISterlingDatabase database, SterlingLogLevel minimumLevel)
         {
+            _database = database;
             _minimumLevel = minimumLevel;
 
             if (Debugger.IsAttached)
             {
-                _guid = SterlingFactory.GetLogger().RegisterLogger(_Log);
+                _guid = _database.LogManager.RegisterLogger(_Log);
             }
         }
 
@@ -33,7 +35,7 @@ namespace Wintellect.Sterling.Core
         {
             if (!_guid.Equals(Guid.Empty))
             {
-                SterlingFactory.GetLogger().UnhookLogger(_guid);
+                _database.LogManager.UnhookLogger(_guid);
             }
         }
 

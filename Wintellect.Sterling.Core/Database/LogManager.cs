@@ -7,8 +7,10 @@ namespace Wintellect.Sterling.Core.Database
     /// <summary>
     ///     Manages the loggers
     /// </summary>
-    public class LogManager : ISterlingLock 
+    public class LogManager
     {
+        private object _lock = new object();
+
         /// <summary>
         ///     The dictionary of loggers
         /// </summary>
@@ -24,7 +26,7 @@ namespace Wintellect.Sterling.Core.Database
         {
             var identifier = Guid.NewGuid();
 
-            lock(Lock)
+            lock(_lock)
             {
                 _loggers.Add(identifier, logger);
             }
@@ -38,12 +40,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="guid">The identifier for the logger</param>
         public void UnhookLogger(Guid guid)
         {
-            if (!_loggers.ContainsKey(guid))
-            {
-                throw new SterlingLoggerNotFoundException(guid);
-            }
-
-            lock(Lock)
+            lock(_lock)
             {
                 _loggers.Remove(guid);
             }
@@ -57,20 +54,13 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="exception">The exception</param>
         public void Log(SterlingLogLevel level, string message, Exception exception)
         {
-            lock(Lock)
+            lock(_lock)
             {
                 foreach (var key in _loggers.Keys)
                 {
                     _loggers[key](level, message, exception);                    
                 }
             }
-        }
-
-        private static readonly object _lock = new object();
-
-        public object Lock
-        {
-            get { return _lock; }
         }
     }
 }

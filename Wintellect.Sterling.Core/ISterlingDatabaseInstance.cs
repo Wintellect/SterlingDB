@@ -14,7 +14,7 @@ namespace Wintellect.Sterling.Core
     /// <summary>
     ///     The sterling database instance
     /// </summary>
-    public interface ISterlingDatabaseInstance : ISterlingLock 
+    public interface ISterlingDatabaseInstance 
     {
         /// <summary>
         ///     The driver
