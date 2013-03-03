@@ -13,10 +13,6 @@ namespace Wintellect.Sterling.Core.Database
         private List<ISterlingTypeResolver> _typeResolvers = new List<ISterlingTypeResolver>();
         private Dictionary<string, Type> _resolvedTypes = new Dictionary<string, Type>();
 
-        public TableTypeResolver()
-        {
-        }
-
         public void RegisterTypeResolver(ISterlingTypeResolver interceptor)
         {
             if (interceptor == null)
