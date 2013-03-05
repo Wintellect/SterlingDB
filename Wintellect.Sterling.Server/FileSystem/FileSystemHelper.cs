@@ -170,11 +170,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                     directory.EnumerateFiles()
                     .Select(file => file.FullName))
                 {
-                    var pathLock = PathLock.GetLock(filePath.Replace("\\", "/"));
-                    lock (pathLock)
-                    {
-                        File.Delete(filePath);
-                    }
+                    File.Delete( filePath );
                 }
 
                 var dirPath = path.TrimEnd('\\', '/');

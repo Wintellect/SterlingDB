@@ -35,6 +35,8 @@ namespace Wintellect.Sterling.Test.Keys
             return new WindowsStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #elif SILVERLIGHT
             return new IsolatedStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+#elif AZURE_DRIVER
+            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #else
             return new FileSystemDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
 #endif

@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;AZURE_DRIVER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -129,6 +129,10 @@
     <ProjectReference Include="..\Wintellect.Sterling.Core\Wintellect.Sterling.Core.csproj">
       <Project>{7b8f46da-a437-45c4-b54a-87b418d5701f}</Project>
       <Name>Wintellect.Sterling.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Wintellect.Sterling.Server.Azure\Wintellect.Sterling.Server.Azure.csproj">
+      <Project>{e0783b3c-e09b-437f-b9de-29e45accdf55}</Project>
+      <Name>Wintellect.Sterling.Server.Azure</Name>
     </ProjectReference>
     <ProjectReference Include="..\Wintellect.Sterling.Server\Wintellect.Sterling.Server.csproj">
       <Project>{549440ca-6c2c-437d-bf6a-b86eb2335551}</Project>

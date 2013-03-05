@@ -30,6 +30,8 @@ namespace Wintellect.Sterling.Test.Keys
             return new WindowsStorageDriver( test );
 #elif SILVERLIGHT
             return new IsolatedStorageDriver( test );
+#elif AZURE_DRIVER
+            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
             return new FileSystemDriver( test );
 #endif

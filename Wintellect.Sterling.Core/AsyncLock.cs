@@ -57,15 +57,24 @@ namespace Wintellect.Sterling.Core
     {
         private readonly AsyncSemaphore _semaphore;
         private readonly Task<Releaser> _releaser;
+        private readonly Task<Releaser> _reentrantReleaser;
+        private readonly int _threadId;
 
         public AsyncLock()
         {
+            _threadId = Environment.CurrentManagedThreadId;
             _semaphore = new AsyncSemaphore( 1 );
             _releaser = Task.FromResult( new Releaser( this ) );
+            _reentrantReleaser = Task.FromResult( new Releaser() );
         }
 
         public Task<Releaser> LockAsync()
         {
+            if ( Environment.CurrentManagedThreadId == _threadId )
+            {
+                return _reentrantReleaser;
+            }
+
             var wait = _semaphore.WaitAsync();
 
             return wait.IsCompleted ?

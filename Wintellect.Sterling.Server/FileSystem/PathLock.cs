@@ -1,26 +1,29 @@
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Wintellect.Sterling.Core;
 
 namespace Wintellect.Sterling.Server.FileSystem
 {
-    public static class PathLock
+    internal static class PathLock
     {
-        private static readonly Dictionary<int, object> _pathLocks = new Dictionary<int,object>();
+        private static readonly Dictionary<int, AsyncLock> _pathLocks = new Dictionary<int, AsyncLock>();
 
-        public static object GetLock(string path)
+        public static AsyncLock GetLock( string path )
         {
             var hash = path.GetHashCode();
-            lock (((ICollection)_pathLocks).SyncRoot)
+
+            lock ( _pathLocks )
             {
-                if (_pathLocks.ContainsKey(hash))
+                AsyncLock aLock = null;
+
+                if ( _pathLocks.TryGetValue( hash, out aLock ) == false )
                 {
-                    return _pathLocks[hash];
+                    aLock = _pathLocks[ hash ] = new AsyncLock();
                 }
 
-                var lockObject = new object();
-                _pathLocks.Add(hash, lockObject);
-
-                return lockObject;
+                return aLock;
             }
         }
     }
