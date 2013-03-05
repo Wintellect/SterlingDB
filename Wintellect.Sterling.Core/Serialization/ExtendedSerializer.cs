@@ -30,7 +30,7 @@ namespace Wintellect.Sterling.Core.Serialization
                                                         },
                                                     br =>
                                                         {
-                                                            new DateTime(br.ReadInt64(), (DateTimeKind) br.ReadInt32() );
+                                                            return new DateTime(br.ReadInt64(), (DateTimeKind) br.ReadInt32() );
                                                         } ) );
 
 
