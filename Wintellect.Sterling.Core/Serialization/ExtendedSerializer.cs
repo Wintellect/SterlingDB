@@ -23,8 +23,15 @@ namespace Wintellect.Sterling.Core.Serialization
         {
             // wire up the serialization pairs 
             _serializers.Add( typeof( DateTime ), new Tuple<Action<BinaryWriter, object>, Func<BinaryReader, object>>(
-                                                    ( bw, obj ) => bw.Write( ( (DateTime) obj ).Ticks ),
-                                                    br => new DateTime( br.ReadInt64() ) ) );
+                                                    ( bw, obj ) =>
+                                                        {
+                                                            bw.Write( ( (DateTime) obj ).Ticks );
+                                                            bw.Write( (int) ( (DateTime) obj ).Kind );
+                                                        },
+                                                    br =>
+                                                        {
+                                                            return new DateTime(br.ReadInt64(), (DateTimeKind) br.ReadInt32() );
+                                                        } ) );
 
 
             _serializers.Add( typeof( Guid ), new Tuple<Action<BinaryWriter, object>, Func<BinaryReader, object>>(
