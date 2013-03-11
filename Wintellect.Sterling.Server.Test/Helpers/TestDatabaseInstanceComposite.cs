@@ -8,14 +8,6 @@ namespace Wintellect.Sterling.Test.Helpers
     public class TestDatabaseInstanceComposite : BaseDatabaseInstance
     {        
         /// <summary>
-        ///     The name of the database instance
-        /// </summary>
-        public override string Name
-        {
-            get { return "TestDatabaseComposite"; }
-        }
-
-        /// <summary>
         ///     Method called from the constructor to register tables
         /// </summary>
         /// <returns>The list of tables for the database</returns>

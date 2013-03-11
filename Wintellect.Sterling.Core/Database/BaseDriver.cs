@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Wintellect.Sterling.Core.Serialization;
@@ -16,26 +17,21 @@ namespace Wintellect.Sterling.Core.Database
 
         protected BaseDriver()
         {
-            TypeIndex = new List<string>();   
-        }
-
-        /// <summary>
-        ///     Constructor
-        /// </summary>
-        /// <param name="databaseName">Database</param>
-        /// <param name="serializer">Serializer</param>
-        /// <param name="log">Logging delegate</param>
-        protected BaseDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : this()
-        {            
-            DatabaseName = databaseName;
-            DatabaseSerializer = serializer;
-            Log = log;
+            TypeIndex = new List<string>();
+#if DEBUG
+            Log = ( level, msg, ex ) => Debug.WriteLine( "Level: {0} Message: {1} Exception: {2}",
+                                                         level,
+                                                         msg ?? "<null>",
+                                                         ex == null ? "<null>" : ex.GetType().FullName );
+#else
+            Log = ( level, msg, ex ) => { };
+#endif
         }
 
         /// <summary>
         ///     Name of the database the driver is registered to
         /// </summary>
-        public string DatabaseName { get; set; }
+        public string DatabaseInstanceName { get; set; }
 
         /// <summary>
         ///     Logger

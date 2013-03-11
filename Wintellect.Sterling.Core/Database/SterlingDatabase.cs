@@ -204,9 +204,9 @@ namespace Wintellect.Sterling.Core.Database
             }
         }
 
-        public ISterlingDatabaseInstance RegisterDatabase<T>() where T : BaseDatabaseInstance
+        public ISterlingDatabaseInstance RegisterDatabase<T>( string instanceName = null ) where T : BaseDatabaseInstance
         {
-            return RegisterDatabase<T>(null);
+            return RegisterDatabase<T>( instanceName ?? "InMemory", null );
         }
 
         /// <summary>
@@ -214,10 +214,10 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <typeparam name="T">The type of the database to register</typeparam>
         /// <typeparam name="TDriver">Register with a driver</typeparam>
-        public ISterlingDatabaseInstance RegisterDatabase<T, TDriver>() where T : BaseDatabaseInstance where TDriver : ISterlingDriver
+        public ISterlingDatabaseInstance RegisterDatabase<T, TDriver>( string instanceName ) where T : BaseDatabaseInstance where TDriver : ISterlingDriver
         {
             var driver = (TDriver) Activator.CreateInstance(typeof (TDriver));
-            return RegisterDatabase<T>(driver);
+            return RegisterDatabase<T>( instanceName, driver);
         }
 
         /// <summary>
@@ -225,18 +225,18 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         /// <typeparam name="T">The type of the database to register</typeparam>
         /// <typeparam name="TDriver">Register with a driver</typeparam>
-        public ISterlingDatabaseInstance RegisterDatabase<T, TDriver>(TDriver driver)
+        public ISterlingDatabaseInstance RegisterDatabase<T, TDriver>(string instanceName, TDriver driver)
             where T : BaseDatabaseInstance
             where TDriver : ISterlingDriver
         {
-            return RegisterDatabase<T>(driver);
+            return RegisterDatabase<T>(instanceName, driver);
         }
 
         /// <summary>
         ///     Register a database type with the system
         /// </summary>
         /// <typeparam name="T">The type of the database to register</typeparam>
-        public ISterlingDatabaseInstance RegisterDatabase<T>(ISterlingDriver driver) where T : BaseDatabaseInstance
+        public ISterlingDatabaseInstance RegisterDatabase<T>(string instanceName, ISterlingDriver driver) where T : BaseDatabaseInstance
         {
             _RequiresActivation();
             _logManager.Log(SterlingLogLevel.Information, 
@@ -250,31 +250,27 @@ namespace Wintellect.Sterling.Core.Database
                 return existing.Item2;
             }
 
-            var instance = (ISterlingDatabaseInstance)Activator.CreateInstance(typeof (T));
+            var instance = (BaseDatabaseInstance)Activator.CreateInstance(typeof (T));
 
-            if ( instance is BaseDatabaseInstance )
-            {
-                ( (BaseDatabaseInstance) instance ).Database = this;
-            }
+            instance.Database = this;
 
             if (driver == null)
             {
-                driver = new MemoryDriver(instance.Name, _serializer, _logManager.Log);
+                driver = new MemoryDriver();
             }
-            else
-            {
-                driver.DatabaseName = instance.Name;
-                driver.DatabaseSerializer = _serializer;
-                driver.Log = _logManager.Log;
-            }
-            
-            ((BaseDatabaseInstance) instance).Serializer = _serializer;
 
-            ((BaseDatabaseInstance)instance).RegisterTypeResolvers();
-            ((BaseDatabaseInstance)instance).RegisterPropertyConverters();
+            driver.DatabaseInstanceName = instanceName;
+            driver.DatabaseSerializer = _serializer;
+            driver.Log = _logManager.Log;
+
+            instance.Serializer = _serializer;
+
+            instance.RegisterTypeResolvers();
+            instance.RegisterPropertyConverters();
+            instance.PublishTables(driver);
             
-            ((BaseDatabaseInstance)instance).PublishTables(driver);
-            _databases.Add(instance.Name, new Tuple<Type, ISterlingDatabaseInstance>(typeof(T),instance));
+            _databases.Add(instanceName, new Tuple<Type, ISterlingDatabaseInstance>(typeof(T),instance));
+            
             return instance;
         }
 

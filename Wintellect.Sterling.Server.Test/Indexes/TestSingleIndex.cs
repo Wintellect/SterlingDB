@@ -25,16 +25,16 @@ namespace Wintellect.Sterling.Test.Indexes
     [TestClass]
     public class TestSingleIndexAltDriver : TestSingleIndex
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new WindowsStorageDriver() { DatabaseInstanceName = TestContext.TestName };
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new IsolatedStorageDriver() { DatabaseInstanceName = TestContext.TestName };
 #elif AZURE_DRIVER
-            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver() { DatabaseInstanceName = TestContext.TestName };
 #else
-            return new FileSystemDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new FileSystemDriver() { DatabaseInstanceName = TestContext.TestName };
 #endif
         }
     }
@@ -65,7 +65,7 @@ namespace Wintellect.Sterling.Test.Indexes
         [TestInitialize]
         public void Init()
         {
-            _driver = GetDriver( TestContext.TestName );
+            _driver = GetDriver();
 
             _testModels = new List<TestModel>(3);
             for(var x = 0; x < 3; x++)

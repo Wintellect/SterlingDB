@@ -13,7 +13,7 @@ namespace Wintellect.Sterling.Core
         /// <summary>
         ///     Name of the database the driver is registered to
         /// </summary>
-        string DatabaseName { get; set; }
+        string DatabaseInstanceName { get; set; }
 
         /// <summary>
         ///     Logger

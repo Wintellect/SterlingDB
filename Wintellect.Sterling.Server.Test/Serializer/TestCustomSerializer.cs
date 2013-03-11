@@ -144,14 +144,14 @@ namespace Wintellect.Sterling.Test.Serializer
     [TestClass]
     public class TestCustomSerializerAltDriver : TestCustomSerializer
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
     }
@@ -180,7 +180,7 @@ namespace Wintellect.Sterling.Test.Serializer
             _engine = Factory.NewEngine();
             _engine.SterlingDatabase.RegisterSerializer<SupportSerializer>();            
             _engine.Activate();
-            DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>( GetDriver( TestContext.TestName ) );
+            DatabaseInstance = _engine.SterlingDatabase.RegisterDatabase<CustomSerializerDatabase>( TestContext.TestName, GetDriver() );
             DatabaseInstance.PurgeAsync().Wait();
         }
 

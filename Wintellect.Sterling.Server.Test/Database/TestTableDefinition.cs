@@ -31,29 +31,29 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestTableDefinitionAltDriver : TestTableDefinition
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #elif AZURE_DRIVER
             return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
 
-        protected override ISterlingDriver GetDriver( string test, string databaseName, ISterlingSerializer serializer )
+        protected override ISterlingDriver GetDriver( string test, ISterlingSerializer serializer )
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
+            return new WindowsStorageDriver() { DatabaseInstanceName = test, DatabaseSerializer = serializer };
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
+            return new IsolatedStorageDriver()  { DatabaseInstanceName = test, DatabaseSerializer = serializer };
 #elif AZURE_DRIVER
-            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
+            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver() { DatabaseInstanceName = test, DatabaseSerializer = serializer };
 #else
-            return new FileSystemDriver( test + databaseName, serializer, ( lvl, msg, ex ) => { } );
+            return new FileSystemDriver()  { DatabaseInstanceName = test, DatabaseSerializer = serializer };
 #endif
         }
     }
@@ -64,9 +64,9 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestTableDefinition : TestBase
     {
-        protected virtual ISterlingDriver GetDriver( string test, string databaseName, ISterlingSerializer serializer )
+        protected virtual ISterlingDriver GetDriver( string test, ISterlingSerializer serializer )
         {
-            return new MemoryDriver( test + databaseName, serializer );
+            return new MemoryDriver() { DatabaseInstanceName = test, DatabaseSerializer = serializer };
         }
 
         private readonly TestModel[] _models = new[]
@@ -99,7 +99,7 @@ namespace Wintellect.Sterling.Test.Database
             serializer.AddSerializer(new DefaultSerializer());
             serializer.AddSerializer(new ExtendedSerializer( new PlatformAdapter() ));
             _testAccessCount = 0;
-            _target = new TableDefinition<TestModel, int>(GetDriver(TestContext.TestName, _testDatabase.Name, serializer),
+            _target = new TableDefinition<TestModel, int>(GetDriver(TestContext.TestName, serializer),
                                                         _GetTestModelByKey, t => t.Key);
         }        
 

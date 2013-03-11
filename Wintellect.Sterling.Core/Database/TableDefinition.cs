@@ -72,7 +72,7 @@ namespace Wintellect.Sterling.Core.Database
         {
             if (Indexes.ContainsKey(name))
             {
-                throw new SterlingDuplicateIndexException(name, typeof(T), _driver.DatabaseName);
+                throw new SterlingDuplicateIndexException(name, typeof(T), _driver.DatabaseInstanceName);
             }
 
             var indexCollection = new IndexCollection<T, TIndex, TKey>(name, _driver, indexer, _resolver);
@@ -91,7 +91,7 @@ namespace Wintellect.Sterling.Core.Database
         {
             if (Indexes.ContainsKey(name))
             {
-                throw new SterlingDuplicateIndexException(name, typeof(T), _driver.DatabaseName);
+                throw new SterlingDuplicateIndexException(name, typeof(T), _driver.DatabaseInstanceName);
             }
 
             var indexCollection = new IndexCollection<T, TIndex1, TIndex2, TKey>(name, _driver, indexer, _resolver);

@@ -34,21 +34,6 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             Initialize(basePath, siteWide);
         }
 
-        public IsolatedStorageDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : this(databaseName, serializer, log, false)
-        {
-        }
-
-        public IsolatedStorageDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log, bool siteWide) 
-            : this(databaseName, serializer, log, siteWide, BASE)
-        {           
-        }
-
-        public IsolatedStorageDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log, bool siteWide, string basePath)
-            : base(databaseName, serializer, log)
-        {
-            Initialize(basePath, siteWide);
-        }
-
         private IsoStorageHelper _iso;
         private string _basePath;
         private readonly PathProvider _pathProvider = new PathProvider();
@@ -67,11 +52,11 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="keyMap">Key map</param>
         public override async Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
-            _iso.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
+            _iso.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this ) );
 
             using ( await _lock.LockAsync() )
             {
-                var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+                var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
                 using ( var keyFile = _iso.GetWriter( keyPath ) )
                 {
@@ -97,7 +82,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <returns>The key list</returns>
         public override async Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary dictionary)
         {
-            var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+            var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
             if ( _iso.FileExists( keyPath ) )
             {
@@ -127,7 +112,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="indexMap">The index map</param>
         public override async Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             using ( await _lock.LockAsync() )
             {
@@ -155,7 +140,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="indexMap">The index map</param>        
         public override async Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             using ( await _lock.LockAsync() )
             {
@@ -183,7 +168,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <returns>The index map</returns>
         public override async Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var dictionary = new Dictionary<TKey, TIndex>();
             
@@ -219,7 +204,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <returns>The index map</returns>        
         public override async Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var dictionary = new Dictionary<TKey, Tuple<TIndex1, TIndex2>>();
             
@@ -253,9 +238,9 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="tables">The list of tables</param>
         public override async void PublishTables( Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
-            _iso.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
+            _iso.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseInstanceName, this));
 
-            var typePath = _pathProvider.GetTypesPath(_basePath, DatabaseName, this);
+            var typePath = _pathProvider.GetTypesPath(_basePath, DatabaseInstanceName, this);
 
             if (!_iso.FileExists(typePath)) return;
 
@@ -269,7 +254,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
                     var tableType = resolveType(fullTypeName);
                     if (tableType == null)
                     {
-                        throw new SterlingTableNotFoundException(fullTypeName, DatabaseName);
+                        throw new SterlingTableNotFoundException(fullTypeName, DatabaseInstanceName);
                     }
 
                     await GetTypeIndexAsync(tableType.AssemblyQualifiedName);
@@ -281,7 +266,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
                 foreach (var type in tables.Keys)
                 {
                     _tables.Add(type);
-                    _iso.EnsureDirectory(_pathProvider.GetTablePath(_basePath, DatabaseName, type, this));
+                    _iso.EnsureDirectory(_pathProvider.GetTablePath(_basePath, DatabaseInstanceName, type, this));
                 }
             }
         }
@@ -293,7 +278,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             using ( await _lock.LockAsync() )
             {
-                var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseName, this );
+                var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseInstanceName, this );
             
                 using ( var typeFile = _iso.GetWriter( typePath ) )
                 {
@@ -344,11 +329,11 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="bytes">The byte stream</param>
         public override async Task SaveAsync(Type type, int keyIndex, byte[] bytes)
         {
-            var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseName, type, this, keyIndex );
+            var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             _iso.EnsureDirectory( instanceFolder );
             
-            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             using ( await _lock.LockAsync() )
             using ( var instanceFile = _iso.GetWriter( instancePath ) )
@@ -371,7 +356,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <returns>The byte stream</returns>
         public override async Task<BinaryReader> LoadAsync(Type type, int keyIndex)
         {
-            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             using ( await _lock.LockAsync() )
             {
@@ -386,7 +371,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="keyIndex">The index of the key</param>
         public override async Task DeleteAsync(Type type, int keyIndex)
         {
-            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             using ( await _lock.LockAsync() )
             {
@@ -403,7 +388,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <param name="type">The type to truncate</param>
         public override async Task TruncateAsync(Type type)
         {
-            var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseName, type, this );
+            var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this );
 
             using ( await _lock.LockAsync() )
             {
@@ -418,7 +403,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             using ( await _lock.LockAsync() )
             {
-                _iso.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseName, this ) );
+                _iso.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseInstanceName, this ) );
             }
         }        
     }

@@ -30,7 +30,7 @@ namespace Wintellect.Sterling.Test.Database
 
                 try
                 {
-                    db.RegisterDatabase<TestDatabaseInstance>();
+                    db.RegisterDatabase<TestDatabaseInstance>( "register" );
                 }
                 catch(SterlingNotReadyException)
                 {
@@ -41,19 +41,19 @@ namespace Wintellect.Sterling.Test.Database
 
                 engine.Activate();
 
-                var testDb2 = db.RegisterDatabase<TestDatabaseInstance>();
+                var testDb2 = db.RegisterDatabase<TestDatabaseInstance>( "register" );
 
                 Assert.IsNotNull(testDb2, "Database registration returned null.");
                 Assert.IsInstanceOfType(testDb2, typeof(TestDatabaseInstance), "Incorrect database type returned.");
             
-                Assert.AreEqual("TestDatabase", testDb2.Name, "Incorrect database name.");
+                Assert.AreEqual("register", testDb2.Name, "Incorrect database name.");
 
                 // test bad database (no table definitions) 
                 raiseError = false;
 
                 try
                 {
-                    db.RegisterDatabase<DupDatabaseInstance>();
+                    db.RegisterDatabase<DupDatabaseInstance>( "register" );
                 }
                 catch (SterlingDuplicateTypeException)
                 {

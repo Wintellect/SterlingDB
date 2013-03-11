@@ -24,16 +24,16 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestPurgeAltDriver : TestPurge
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #elif AZURE_DRIVER
             return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
     }
@@ -54,7 +54,7 @@ namespace Wintellect.Sterling.Test.Database
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>( GetDriver( TestContext.TestName ) );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>( TestContext.TestName, GetDriver() );
         }
 
         [TestCleanup]

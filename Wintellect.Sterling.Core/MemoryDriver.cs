@@ -18,16 +18,6 @@ namespace Wintellect.Sterling.Core
         {            
         }
 
-        public MemoryDriver( string databaseName, ISterlingSerializer serializer )
-        {
-            this.DatabaseName = databaseName;
-            this.DatabaseSerializer = serializer;
-        }
-
-        public MemoryDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : base(databaseName, serializer, log)
-        {
-        }
-
         /// <summary>
         ///     Keys
         /// </summary>

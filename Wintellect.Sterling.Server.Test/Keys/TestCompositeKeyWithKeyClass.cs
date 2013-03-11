@@ -25,16 +25,16 @@ namespace Wintellect.Sterling.Test.Keys
     [TestClass]
     public class TestCompositeKeyWithKeyAltDriver : TestCompositeKey
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #elif AZURE_DRIVER
             return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
     }
@@ -56,7 +56,7 @@ namespace Wintellect.Sterling.Test.Keys
             _engine = Factory.NewEngine();
             _engine.SterlingDatabase.RegisterSerializer<TestCompositeSerializer>();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstanceComposite>( GetDriver( TestContext.TestName ) );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstanceComposite>( TestContext.TestName, GetDriver() );
             _databaseInstance.PurgeAsync().Wait();
         }
 

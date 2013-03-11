@@ -45,7 +45,7 @@ namespace Wintellect.Sterling.Test.Database
             //_startTime = DateTime.Now;
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>();
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>( "async" );
             _modelList = new List<TestModel>();
             for (var i = 0; i < MODELS; i++)
             {

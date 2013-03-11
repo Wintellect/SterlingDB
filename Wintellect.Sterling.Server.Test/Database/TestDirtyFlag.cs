@@ -26,14 +26,6 @@ namespace Wintellect.Sterling.Test.Database
         public Predicate<TestModel> Predicate { get; set; }
 
         /// <summary>
-        ///     The name of the database instance
-        /// </summary>
-        public override string Name
-        {
-            get { return "DirtyDatabase"; }
-        }
-
-        /// <summary>
         ///     Method called from the constructor to register tables
         /// </summary>
         /// <returns>The list of tables for the database</returns>
@@ -55,16 +47,16 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestDirtyFlagAltDriver : TestDirtyFlag
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #elif AZURE_DRIVER
             return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
     }
@@ -90,7 +82,7 @@ namespace Wintellect.Sterling.Test.Database
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<DirtyDatabase>( GetDriver( TestContext.TestName ) );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<DirtyDatabase>( TestContext.TestName, GetDriver() );
             ( (DirtyDatabase) _databaseInstance ).Predicate = model => true;
             _databaseInstance.PurgeAsync().Wait();
         }

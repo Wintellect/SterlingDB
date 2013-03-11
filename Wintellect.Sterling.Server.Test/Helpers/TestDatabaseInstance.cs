@@ -8,18 +8,6 @@ namespace Wintellect.Sterling.Test.Helpers
     public class TestDatabaseInstance : BaseDatabaseInstance
     {
         public const string DATAINDEX = "IndexData";
-        public const string DATABASENAME = "TestDatabase";                
-
-        /// <summary>
-        ///     The name of the database instance
-        /// </summary>
-        public override string Name
-        {
-            get
-            {
-                return DATABASENAME;
-            }
-        }
 
         public static string GetCompositeKey(TestCompositeClass testClass)
         {

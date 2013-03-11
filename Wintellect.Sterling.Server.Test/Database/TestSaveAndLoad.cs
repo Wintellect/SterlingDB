@@ -30,16 +30,16 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestSaveAndLoadAltDriver : TestSaveAndLoad
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #elif AZURE_DRIVER
             return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
     }
@@ -70,7 +70,7 @@ namespace Wintellect.Sterling.Test.Database
         {
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(GetDriver( TestContext.TestName ));
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(TestContext.TestName, GetDriver());
             _databaseInstance.PurgeAsync().Wait();
         }
 
@@ -147,7 +147,7 @@ namespace Wintellect.Sterling.Test.Database
             // bring it back up
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(driver);
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(TestContext.TestName, driver);
 
             // do this in a different order
             _databaseInstance.RegisterTableDefinition(_databaseInstance.CreateTableDefinition<TestSecondLateBoundTable,int>(t=>t.Id));
@@ -200,7 +200,7 @@ namespace Wintellect.Sterling.Test.Database
             // bring it back up
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(driver);
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestDatabaseInstance>(TestContext.TestName, driver);
 
             var actual1 = _databaseInstance.LoadAsync<TestModel>( expected1.Key ).Result;
             var actual2 = _databaseInstance.LoadAsync<TestModel>( expected2.Key ).Result;

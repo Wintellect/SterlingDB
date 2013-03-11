@@ -29,16 +29,6 @@ namespace Wintellect.Sterling.Server.FileSystem
             Initialize(basePath);
         }
 
-        public FileSystemDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log) : this(databaseName, serializer, log, BASE)
-        {
-        }
-        
-        public FileSystemDriver(string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log, string basePath)
-            : base(databaseName, serializer, log)
-        {
-            Initialize(basePath);
-        }
-
         private FileSystemHelper _fileHelper;
         private string _basePath;
         private readonly PathProvider _pathProvider = new PathProvider();
@@ -57,13 +47,13 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="keyMap">Key map</param>
         public override async Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
-            _fileHelper.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseName, type, this ) );
+            _fileHelper.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this ) );
 
             var pathLock = PathLock.GetLock( type.FullName );
 
             using ( await pathLock.LockAsync() )
             {
-                var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+                var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
                 using ( var keyFile = _fileHelper.GetWriter( keyPath ) )
                 {
@@ -90,7 +80,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <returns>The key list</returns>
         public override async Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary dictionary)
         {
-            var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseName, type, this );
+            var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
             if ( _fileHelper.FileExists( keyPath ) )
             {
@@ -123,7 +113,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="indexMap">The index map</param>
         public override async Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var pathLock = PathLock.GetLock( type.FullName );
             
@@ -153,11 +143,11 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="indexMap">The index map</param>        
         public override async Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var pathLock = PathLock.GetLock( type.FullName );
             
-            using( pathLock.LockAsync() )
+            using( await pathLock.LockAsync() )
             {
                 using ( var indexFile = _fileHelper.GetWriter( indexPath ) )
                 {
@@ -183,7 +173,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <returns>The index map</returns>
         public override async Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var dictionary = new Dictionary<TKey, TIndex>();
             
@@ -220,7 +210,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <returns>The index map</returns>        
         public override async Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
         {
-            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseName, type, this, indexName );
+            var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var dictionary = new Dictionary<TKey, Tuple<TIndex1, TIndex2>>();
             
@@ -254,9 +244,9 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="tables">The list of tables</param>
         public override async void PublishTables(Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
-            _fileHelper.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseName, this));
+            _fileHelper.EnsureDirectory(_pathProvider.GetDatabasePath(_basePath, DatabaseInstanceName, this));
 
-            var typePath = _pathProvider.GetTypesPath(_basePath, DatabaseName, this);
+            var typePath = _pathProvider.GetTypesPath(_basePath, DatabaseInstanceName, this);
 
             if (!_fileHelper.FileExists(typePath)) return;
 
@@ -272,21 +262,21 @@ namespace Wintellect.Sterling.Server.FileSystem
                     
                     if (tableType == null)
                     {
-                        throw new SterlingTableNotFoundException(fullTypeName, DatabaseName);
+                        throw new SterlingTableNotFoundException(fullTypeName, DatabaseInstanceName);
                     }
 
                     await GetTypeIndexAsync( tableType.AssemblyQualifiedName );
                 }
             }
 
-            var pathLock = PathLock.GetLock(DatabaseName);
+            var pathLock = PathLock.GetLock(DatabaseInstanceName);
             
             using ( await pathLock.LockAsync() )
             {
                 foreach (var type in tables.Keys)
                 {
                     _tables.Add(type);
-                    _fileHelper.EnsureDirectory(_pathProvider.GetTablePath(_basePath, DatabaseName, type, this));
+                    _fileHelper.EnsureDirectory(_pathProvider.GetTablePath(_basePath, DatabaseInstanceName, type, this));
                 }
             }
         }
@@ -300,7 +290,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             using( await pathLock.LockAsync() )
             {
-                var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseName, this );
+                var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseInstanceName, this );
 
                 using ( var typeFile = _fileHelper.GetWriter( typePath ) )
                 {
@@ -353,11 +343,11 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="bytes">The byte stream</param>
         public override async Task SaveAsync(Type type, int keyIndex, byte[] bytes)
         {
-            var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseName, type, this, keyIndex );
+            var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             _fileHelper.EnsureDirectory( instanceFolder );
             
-            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             var pathLock = PathLock.GetLock( instancePath );
 
@@ -384,7 +374,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <returns>The byte stream</returns>
         public override async Task<BinaryReader> LoadAsync(Type type, int keyIndex)
         {
-            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             var pathLock = PathLock.GetLock( instancePath );
 
@@ -403,7 +393,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="keyIndex">The index of the key</param>
         public override async Task DeleteAsync(Type type, int keyIndex)
         {
-            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseName, type, this, keyIndex );
+            var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             var pathLock = PathLock.GetLock( instancePath );
 
@@ -422,7 +412,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// <param name="type">The type to truncate</param>
         public override async Task TruncateAsync(Type type)
         {
-            var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseName, type, this );
+            var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this );
 
             var pathLock = PathLock.GetLock( type.FullName );
 
@@ -437,11 +427,11 @@ namespace Wintellect.Sterling.Server.FileSystem
         /// </summary>
         public override async Task PurgeAsync()
         {
-            var pathLock = PathLock.GetLock( DatabaseName );
+            var pathLock = PathLock.GetLock( DatabaseInstanceName );
 
             using ( await pathLock.LockAsync() )
             {
-                _fileHelper.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseName, this ) );
+                _fileHelper.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseInstanceName, this ) );
             }
         }        
     }

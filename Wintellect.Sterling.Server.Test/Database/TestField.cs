@@ -24,11 +24,6 @@ namespace Wintellect.Sterling.Test.Database
 
     public class TestObjectFieldDatabase : BaseDatabaseInstance
     {
-        public override string Name
-        {
-            get { return "TestObjectFieldDatabase"; }
-        }
-
         protected override System.Collections.Generic.List<ITableDefinition> RegisterTables()
         {
             return new System.Collections.Generic.List<ITableDefinition>
@@ -45,16 +40,16 @@ namespace Wintellect.Sterling.Test.Database
     [TestClass]
     public class TestFieldAltDriver : TestField
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test );
+            return new WindowsStorageDriver();
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test );
+            return new IsolatedStorageDriver();
 #elif AZURE_DRIVER
             return new Wintellect.Sterling.Server.Azure.TableStorage.Driver();
 #else
-            return new FileSystemDriver( test );
+            return new FileSystemDriver();
 #endif
         }
     }
@@ -76,7 +71,7 @@ namespace Wintellect.Sterling.Test.Database
         {            
             _engine = Factory.NewEngine();
             _engine.Activate();
-            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestObjectFieldDatabase>( GetDriver(TestContext.TestName ) );
+            _databaseInstance = _engine.SterlingDatabase.RegisterDatabase<TestObjectFieldDatabase>( TestContext.TestName, GetDriver() );
             _databaseInstance.PurgeAsync().Wait();
         }
 

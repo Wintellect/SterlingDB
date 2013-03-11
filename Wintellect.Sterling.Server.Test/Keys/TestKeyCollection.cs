@@ -29,16 +29,16 @@ namespace Wintellect.Sterling.Test.Keys
     [TestClass]
     public class TestKeyCollectionAltDriver : TestKeyCollection
     {
-        protected override ISterlingDriver GetDriver( string test )
+        protected override ISterlingDriver GetDriver()
         {
 #if NETFX_CORE
-            return new WindowsStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new WindowsStorageDriver() { DatabaseInstanceName = TestContext.TestName };
 #elif SILVERLIGHT
-            return new IsolatedStorageDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new IsolatedStorageDriver() { DatabaseInstanceName = TestContext.TestName };
 #elif AZURE_DRIVER
-            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new Wintellect.Sterling.Server.Azure.TableStorage.Driver() { DatabaseInstanceName = TestContext.TestName };
 #else
-            return new FileSystemDriver( test, new DefaultSerializer(), ( lvl, msg, ex ) => { } );
+            return new FileSystemDriver() { DatabaseInstanceName = TestContext.TestName };
 #endif
         }
     }
@@ -77,7 +77,7 @@ namespace Wintellect.Sterling.Test.Keys
         [TestInitialize]
         public void TestInit()
         {
-            _driver = GetDriver( TestContext.TestName );
+            _driver = GetDriver();
             _testAccessCount = 0;            
             _target = new KeyCollection<TestModel, int>(_driver,
                                                         _GetTestModelByKey);

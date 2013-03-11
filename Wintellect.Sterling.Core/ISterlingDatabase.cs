@@ -33,14 +33,16 @@ namespace Wintellect.Sterling.Core
         ///     Register a database type with the system
         /// </summary>
         /// <typeparam name="T">The type of the database to register</typeparam>
-        ISterlingDatabaseInstance RegisterDatabase<T>() where T : BaseDatabaseInstance;
+        /// <param name="instanceName">The name of the database instance</param>
+        ISterlingDatabaseInstance RegisterDatabase<T>( string instanceName ) where T : BaseDatabaseInstance;
 
         /// <summary>
         ///     Register a database type with the system
         /// </summary>
         /// <typeparam name="T">The type of the database to register</typeparam>
         /// <typeparam name="TDriver">Register with a driver</typeparam>
-        ISterlingDatabaseInstance RegisterDatabase<T, TDriver>()
+        /// <param name="instanceName">The name of the database instance</param>
+        ISterlingDatabaseInstance RegisterDatabase<T, TDriver>( string instanceName )
             where T : BaseDatabaseInstance
             where TDriver : ISterlingDriver;
 
@@ -48,7 +50,9 @@ namespace Wintellect.Sterling.Core
         ///     Register a database type with the system
         /// </summary>
         /// <typeparam name="T">The type of the database to register</typeparam>
-        ISterlingDatabaseInstance RegisterDatabase<T>(ISterlingDriver driver)
+        /// <param name="instanceName">The name of the database instance</param>
+        /// <param name="driver">The storage driver</param>
+        ISterlingDatabaseInstance RegisterDatabase<T>( string instanceName, ISterlingDriver driver )
             where T : BaseDatabaseInstance;           
 
 

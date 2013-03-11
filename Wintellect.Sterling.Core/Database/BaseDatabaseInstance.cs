@@ -169,8 +169,10 @@ namespace Wintellect.Sterling.Core.Database
         /// <summary>
         ///     The name of the database instance
         /// </summary>
-        public virtual string Name { get { return GetType().FullName; } }
-
+        public string Name
+        {
+            get { return this.Driver.DatabaseInstanceName; }
+        }
 
         /// <summary>
         ///     The type dictating which objects should be ignored

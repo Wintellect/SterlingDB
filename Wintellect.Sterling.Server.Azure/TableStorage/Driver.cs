@@ -20,30 +20,14 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 {
     public class Driver : BaseDriver
     {
-        private Lazy<CloudTableClient> _client = null;
-        private Lazy<CloudTable> _keysTable = null;
-        private Lazy<CloudTable> _indexesTable = null;
-        private Lazy<CloudTable> _typesTable = null;
+        private readonly Lazy<CloudTableClient> _client = null;
+        private readonly Lazy<CloudTable> _keysTable = null;
+        private readonly Lazy<CloudTable> _indexesTable = null;
+        private readonly Lazy<CloudTable> _typesTable = null;
+        
         private bool _dirtyType;
 
         public Driver()
-        {
-            Initialize();
-        }
-
-        public Driver( string databaseName, ISterlingSerializer serializer, Action<SterlingLogLevel, string, Exception> log )
-            : base( databaseName, serializer, log )
-        {
-            Initialize();
-        }
-
-        public string KeysTable { get; set; }
-        public string IndexesTable { get; set; }
-        public string TypesTable { get; set; }
-
-        public string ConnectionString { get; set; }
-
-        private void Initialize()
         {
             _client = new Lazy<CloudTableClient>( () =>
             {
@@ -51,27 +35,16 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                 return account.CreateCloudTableClient();
             } );
 
-            _keysTable = new Lazy<CloudTable>( () =>
-            {
-                var table = _client.Value.GetTableReference( KeysTable ?? "sterlingkeys" );
-                table.CreateIfNotExists();
-                return table;
-            } );
-
-            _indexesTable = new Lazy<CloudTable>( () =>
-            {
-                var table = _client.Value.GetTableReference( IndexesTable ?? "sterlingindexes" );
-                table.CreateIfNotExists();
-                return table;
-            } );
-
-            _typesTable = new Lazy<CloudTable>( () =>
-            {
-                var table = _client.Value.GetTableReference( TypesTable ?? "sterlingtypes" );
-                table.CreateIfNotExists();
-                return table;
-            } );
+            _keysTable = new Lazy<CloudTable>( () => _client.Value.GetTableReference( DatabaseInstanceName + ( KeysTable ?? "sterlingkeys" ) ) );
+            _indexesTable = new Lazy<CloudTable>( () => _client.Value.GetTableReference( DatabaseInstanceName + ( IndexesTable ?? "sterlingindexes" ) ) );
+            _typesTable = new Lazy<CloudTable>( () => _client.Value.GetTableReference( DatabaseInstanceName + ( TypesTable ?? "sterlingtypes" ) ) );
         }
+
+        public string KeysTable { get; set; }
+        public string IndexesTable { get; set; }
+        public string TypesTable { get; set; }
+
+        public string ConnectionString { get; set; }
 
         private static async Task Store( CloudTable table, Action<BinaryWriter> action, string partitionKey, string rowKey )
         {
@@ -161,6 +134,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
+                await _keysTable.Value.CreateIfNotExistsAsync();
+
                 await Store( _keysTable.Value, action, type.FullName, keyType.FullName );
             }
 
@@ -182,6 +157,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                         dictionary.Add( DatabaseSerializer.Deserialize( keyType, reader ), reader.ReadInt32() );
                     }
                 };
+
+                await _keysTable.Value.CreateIfNotExistsAsync();
 
                 await Read( _keysTable.Value, action, type.FullName, keyType.FullName );
 
@@ -206,6 +183,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
+                await _indexesTable.Value.CreateIfNotExistsAsync();
+
                 await Store( _indexesTable.Value, action, type.FullName, indexName );
             }
         }
@@ -214,7 +193,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( pathLock.LockAsync() )
+            using ( await pathLock.LockAsync() )
             {
                 Action<BinaryWriter> action = writer =>
                 {
@@ -227,6 +206,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                         DatabaseSerializer.Serialize( index.Value.Item2, writer );
                     }
                 };
+
+                await _indexesTable.Value.CreateIfNotExistsAsync();
 
                 await Store( _indexesTable.Value, action, type.FullName, indexName );
             }
@@ -250,6 +231,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                                         (TIndex) DatabaseSerializer.Deserialize( typeof( TIndex ), reader ) );
                     }
                 };
+
+                await _indexesTable.Value.CreateIfNotExistsAsync();
 
                 await Read( _indexesTable.Value, action, type.FullName, indexName );
 
@@ -277,6 +260,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
+                await _indexesTable.Value.CreateIfNotExistsAsync();
+
                 await Read( _indexesTable.Value, action, type.FullName, indexName );
 
                 return dictionary;
@@ -302,12 +287,14 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
                     if ( tableType == null )
                     {
-                        throw new SterlingTableNotFoundException( fullTypeName, DatabaseName );
+                        throw new SterlingTableNotFoundException( fullTypeName, DatabaseInstanceName );
                     }
 
                     await GetTypeIndexAsync( tableType.AssemblyQualifiedName );
                 }
             };
+
+            _typesTable.Value.CreateIfNotExists();
 
             Read( _typesTable.Value, action, "___Types", "___Types" ).Wait();
         }
@@ -327,6 +314,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                         writer.Write( type );
                     }
                 };
+
+                await _typesTable.Value.CreateIfNotExistsAsync();
 
                 await Store( _typesTable.Value, action, "___Types", "___Types" );
             }
@@ -361,6 +350,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
             {
                 Action<BinaryWriter> action = writer => writer.Write( bytes );
 
+                await _typesTable.Value.CreateIfNotExistsAsync();
+
                 await Store( _typesTable.Value, action, type.FullName, keyIndex.ToString() );
             }
 
@@ -381,6 +372,8 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
                 Action<byte[]> action = bytesArg => bytes = bytesArg;
 
+                await _typesTable.Value.CreateIfNotExistsAsync();
+
                 await ReadBytes( _typesTable.Value, action, type.FullName, keyIndex.ToString() );
 
                 Contract.Assert( bytes != null );
@@ -395,7 +388,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
             using ( await pathLock.LockAsync() )
             {
-                var operation = TableOperation.Delete( new DynamicTableEntity( type.FullName, keyIndex.ToString() ) );
+                var operation = TableOperation.Delete( new DynamicTableEntity( type.FullName, keyIndex.ToString() ) { ETag = "*" } );
+
+                await _typesTable.Value.CreateIfNotExistsAsync();
 
                 await Task<TableResult>.Factory.FromAsync( _typesTable.Value.BeginExecute, _typesTable.Value.EndExecute, operation, null );
             }
@@ -417,7 +412,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
                 using ( await pathLock.LockAsync() )
                 {
-                    var operation = TableOperation.Delete( new DynamicTableEntity( type.FullName, rowKey ) );
+                    var operation = TableOperation.Delete( new DynamicTableEntity( type.FullName, rowKey ) { ETag = "*" } );
+
+                    await _typesTable.Value.CreateIfNotExistsAsync();
 
                     await Task<TableResult>.Factory.FromAsync( _typesTable.Value.BeginExecute, _typesTable.Value.EndExecute, operation, null );
                 }
@@ -438,7 +435,6 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                 if ( await Task<bool>.Factory.FromAsync( table.Value.BeginExists, table.Value.EndExists, null ) )
                 {
                     await Task.Factory.FromAsync( table.Value.BeginDelete, table.Value.EndDelete, null );
-                    await Task.Factory.FromAsync( table.Value.BeginCreate, table.Value.EndCreate, null );
                 }
             }
         }
