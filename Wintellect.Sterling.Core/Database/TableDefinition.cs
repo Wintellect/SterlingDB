@@ -125,11 +125,11 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         public async Task RefreshAsync()
         {
-            await KeyList.RefreshAsync();
+            await KeyList.RefreshAsync().ConfigureAwait( false );
 
             foreach ( var index in Indexes.Values )
             {
-                await index.RefreshAsync();
+                await index.RefreshAsync().ConfigureAwait( false );
             }
         }
 

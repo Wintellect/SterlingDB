@@ -51,7 +51,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             var pathLock = PathLock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
@@ -68,7 +68,7 @@ namespace Wintellect.Sterling.Server.FileSystem
                 }
             }
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace Wintellect.Sterling.Server.FileSystem
             {
                 var pathLock = PathLock.GetLock( type.FullName );
 
-                using ( await pathLock.LockAsync() )
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
                     using ( var keyFile = _fileHelper.GetReader( keyPath ) )
                     {
@@ -116,8 +116,8 @@ namespace Wintellect.Sterling.Server.FileSystem
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var pathLock = PathLock.GetLock( type.FullName );
-            
-            using( await pathLock.LockAsync() )
+
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 using ( var indexFile = _fileHelper.GetWriter( indexPath ) )
                 {
@@ -146,8 +146,8 @@ namespace Wintellect.Sterling.Server.FileSystem
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var pathLock = PathLock.GetLock( type.FullName );
-            
-            using( await pathLock.LockAsync() )
+
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 using ( var indexFile = _fileHelper.GetWriter( indexPath ) )
                 {
@@ -180,8 +180,8 @@ namespace Wintellect.Sterling.Server.FileSystem
             if ( _fileHelper.FileExists( indexPath ) )
             {
                 var pathLock = PathLock.GetLock( type.FullName );
-            
-                using( await pathLock.LockAsync() )
+
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
                     using ( var indexFile = _fileHelper.GetReader( indexPath ) )
                     {
@@ -217,8 +217,8 @@ namespace Wintellect.Sterling.Server.FileSystem
             if ( _fileHelper.FileExists( indexPath ) )
             {
                 var pathLock = PathLock.GetLock( type.FullName );
-            
-                using( await pathLock.LockAsync() )
+
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
                     using ( var indexFile = _fileHelper.GetReader( indexPath ) )
                     {
@@ -265,13 +265,13 @@ namespace Wintellect.Sterling.Server.FileSystem
                         throw new SterlingTableNotFoundException(fullTypeName, DatabaseInstanceName);
                     }
 
-                    await GetTypeIndexAsync( tableType.AssemblyQualifiedName );
+                    await GetTypeIndexAsync( tableType.AssemblyQualifiedName ).ConfigureAwait( false );
                 }
             }
 
             var pathLock = PathLock.GetLock(DatabaseInstanceName);
-            
-            using ( await pathLock.LockAsync() )
+
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 foreach (var type in tables.Keys)
                 {
@@ -288,7 +288,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         {
             var pathLock = PathLock.GetLock( TypeIndex.GetType().FullName );
 
-            using( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseInstanceName, this );
 
@@ -313,7 +313,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         {
             var pathLock = PathLock.GetLock( TypeIndex.GetType().FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !TypeIndex.Contains( type ) )
                 {
@@ -351,7 +351,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             var pathLock = PathLock.GetLock( instancePath );
 
-            using( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             using ( var instanceFile = _fileHelper.GetWriter( instancePath ) )
             {
                 instanceFile.Write( bytes );
@@ -363,7 +363,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             _dirtyType = false;
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }   
             
         /// <summary>
@@ -378,7 +378,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             var pathLock = PathLock.GetLock( instancePath );
 
-            using( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 return _fileHelper.FileExists( instancePath )
                            ? _fileHelper.GetReader( instancePath )
@@ -397,7 +397,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             var pathLock = PathLock.GetLock( instancePath );
 
-            using( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( _fileHelper.FileExists( instancePath ) )
                 {
@@ -416,7 +416,7 @@ namespace Wintellect.Sterling.Server.FileSystem
 
             var pathLock = PathLock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 _fileHelper.Purge( folderPath );
             }
@@ -429,7 +429,7 @@ namespace Wintellect.Sterling.Server.FileSystem
         {
             var pathLock = PathLock.GetLock( DatabaseInstanceName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 _fileHelper.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseInstanceName, this ) );
             }

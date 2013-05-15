@@ -44,15 +44,15 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         /// <param name="keyMap">Key map</param>
         public override async Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
-            await StorageHelper.EnsureFolderExistsAsync( _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this ) );
+            await StorageHelper.EnsureFolderExistsAsync( _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this ) ).ConfigureAwait( false );
 
             var pathLock = PathLock.GetLock( type.FullName );
-            
-            using ( await pathLock.LockAsync() )
+
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
-            
-                using ( var keyFile = await StorageHelper.GetWriterForFileAsync( keyPath ) )
+
+                using ( var keyFile = await StorageHelper.GetWriterForFileAsync( keyPath ).ConfigureAwait( false ) )
                 {
                     keyFile.Write( keyMap.Count );
                 
@@ -65,7 +65,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
                 }
             }
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }
 
         /// <summary>
@@ -79,13 +79,13 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
-            if ( await StorageHelper.FileExistsAsync( keyPath ) )
+            if ( await StorageHelper.FileExistsAsync( keyPath ).ConfigureAwait( false ) )
             {
                 var pathLock = PathLock.GetLock( type.FullName );
 
-                using( await pathLock.LockAsync() )
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
-                    using ( var keyFile = await StorageHelper.GetReaderForFileAsync( keyPath ) )
+                    using ( var keyFile = await StorageHelper.GetReaderForFileAsync( keyPath ).ConfigureAwait( false ) )
                     {
                         var count = keyFile.ReadInt32();
 
@@ -113,10 +113,10 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var pathLock = PathLock.GetLock( type.FullName );
-            
-            using( await pathLock.LockAsync() )
+
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
-                using ( var indexFile = await StorageHelper.GetWriterForFileAsync( indexPath ) )
+                using ( var indexFile = await StorageHelper.GetWriterForFileAsync( indexPath ).ConfigureAwait( false ) )
                 {
                     indexFile.Write( indexMap.Count );
 
@@ -143,10 +143,10 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var pathLock = PathLock.GetLock( type.FullName );
-            
-            using ( await pathLock.LockAsync() )
+
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
-                using ( var indexFile = await StorageHelper.GetWriterForFileAsync( indexPath ) )
+                using ( var indexFile = await StorageHelper.GetWriterForFileAsync( indexPath ).ConfigureAwait( false ) )
                 {
                     indexFile.Write( indexMap.Count );
 
@@ -173,14 +173,14 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var dictionary = new Dictionary<TKey, TIndex>();
-            
-            if ( await StorageHelper.FileExistsAsync( indexPath ) )
+
+            if ( await StorageHelper.FileExistsAsync( indexPath ).ConfigureAwait( false ) )
             {
                 var pathLock = PathLock.GetLock( type.FullName );
 
-                using ( await pathLock.LockAsync() )
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
-                    using ( var indexFile = await StorageHelper.GetReaderForFileAsync( indexPath ) )
+                    using ( var indexFile = await StorageHelper.GetReaderForFileAsync( indexPath ).ConfigureAwait( false ) )
                     {
                         var count = indexFile.ReadInt32();
 
@@ -210,14 +210,14 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
             var dictionary = new Dictionary<TKey, Tuple<TIndex1, TIndex2>>();
-            
-            if ( await StorageHelper.FileExistsAsync( indexPath ) )
+
+            if ( await StorageHelper.FileExistsAsync( indexPath ).ConfigureAwait( false ) )
             {
                 var pathLock = PathLock.GetLock( type.FullName );
 
-                using ( await pathLock.LockAsync() )
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
-                    using ( var indexFile = await StorageHelper.GetReaderForFileAsync( indexPath ) )
+                    using ( var indexFile = await StorageHelper.GetReaderForFileAsync( indexPath ).ConfigureAwait( false ) )
                     {
                         var count = indexFile.ReadInt32();
 
@@ -243,13 +243,13 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         /// <param name="tables">The list of tables</param>
         public override async void PublishTables(Dictionary<Type, ITableDefinition> tables, Func<string, Type> resolveType )
         {
-            await StorageHelper.EnsureFolderExistsAsync(_pathProvider.GetDatabasePath(_basePath, DatabaseInstanceName, this));
+            await StorageHelper.EnsureFolderExistsAsync( _pathProvider.GetDatabasePath( _basePath, DatabaseInstanceName, this ) ).ConfigureAwait( false );
 
             var typePath = _pathProvider.GetTypesPath(_basePath, DatabaseInstanceName, this);
 
-            if ( ! await StorageHelper.FileExistsAsync( typePath ) ) return;
+            if ( !await StorageHelper.FileExistsAsync( typePath ).ConfigureAwait( false ) ) return;
 
-            using (var typeFile = await StorageHelper.GetReaderForFileAsync( typePath ) )
+            using ( var typeFile = await StorageHelper.GetReaderForFileAsync( typePath ).ConfigureAwait( false ) )
             {
                 var count = typeFile.ReadInt32();
 
@@ -269,12 +269,12 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             var pathLock = PathLock.GetLock(DatabaseInstanceName);
 
-            using( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 foreach (var type in tables.Keys)
                 {
                     _tables.Add(type);
-                    await StorageHelper.EnsureFolderExistsAsync(_pathProvider.GetTablePath(_basePath, DatabaseInstanceName, type, this));
+                    await StorageHelper.EnsureFolderExistsAsync( _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this ) ).ConfigureAwait( false );
                 }
             }
         }
@@ -286,11 +286,11 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             var pathLock = PathLock.GetLock( TypeIndex.GetType().FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseInstanceName, this );
-            
-                using ( var typeFile = await StorageHelper.GetWriterForFileAsync( typePath ) )
+
+                using ( var typeFile = await StorageHelper.GetWriterForFileAsync( typePath ).ConfigureAwait( false ) )
                 {
                     typeFile.Write( TypeIndex.Count );
                 
@@ -344,15 +344,15 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             var instanceFolder = _pathProvider.GetInstanceFolder( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
-            await StorageHelper.EnsureFolderExistsAsync( instanceFolder );
+            await StorageHelper.EnsureFolderExistsAsync( instanceFolder ).ConfigureAwait( false );
 
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             // lock on this while saving, but remember that anyone else loading can now grab the
             // copy 
-            using ( await PathLock.GetLock( instancePath ).LockAsync() )
+            using ( await PathLock.GetLock( instancePath ).LockAsync().ConfigureAwait( false ) )
             {
-                using ( var instanceFile = await StorageHelper.GetWriterForFileAsync( instancePath ) )
+                using ( var instanceFile = await StorageHelper.GetWriterForFileAsync( instancePath ).ConfigureAwait( false ) )
                 {
                     instanceFile.Write( bytes );
                 }
@@ -362,7 +362,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             _dirtyType = false;
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }   
             
         /// <summary>
@@ -376,10 +376,10 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
             // otherwise let's wait for it to be released and grab it from disk
-            using ( await PathLock.GetLock( instancePath ).LockAsync() )
+            using ( await PathLock.GetLock( instancePath ).LockAsync().ConfigureAwait( false ) )
             {
-                return await StorageHelper.FileExistsAsync( instancePath )
-                           ? await StorageHelper.GetReaderForFileAsync( instancePath )
+                return await StorageHelper.FileExistsAsync( instancePath ).ConfigureAwait( false )
+                           ? await StorageHelper.GetReaderForFileAsync( instancePath ).ConfigureAwait( false )
                            : new BinaryReader( new MemoryStream() );
             }
         }
@@ -393,11 +393,11 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
-            using ( await PathLock.GetLock( instancePath ).LockAsync() )
+            using ( await PathLock.GetLock( instancePath ).LockAsync().ConfigureAwait( false ) )
             {
-                if ( await StorageHelper.FileExistsAsync( instancePath ) )
+                if ( await StorageHelper.FileExistsAsync( instancePath ).ConfigureAwait( false ) )
                 {
-                    await StorageHelper.DeleteFileAsync( instancePath );
+                    await StorageHelper.DeleteFileAsync( instancePath ).ConfigureAwait( false );
                 }
             }
         }
@@ -410,9 +410,9 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this );
 
-            using ( await PathLock.GetLock( type.FullName ).LockAsync() )
+            using ( await PathLock.GetLock( type.FullName ).LockAsync().ConfigureAwait( false ) )
             {
-                var folder = await StorageHelper.GetFolderAsync( folderPath );
+                var folder = await StorageHelper.GetFolderAsync( folderPath ).ConfigureAwait( false );
 
                 await folder.DeleteAsync();
             }
@@ -425,9 +425,9 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             var databasePath = _pathProvider.GetDatabasePath( _basePath, DatabaseInstanceName, this );
 
-            using ( await PathLock.GetLock( DatabaseInstanceName ).LockAsync() )
+            using ( await PathLock.GetLock( DatabaseInstanceName ).LockAsync().ConfigureAwait( false ) )
             {
-                var folder = await StorageHelper.GetFolderAsync( databasePath );
+                var folder = await StorageHelper.GetFolderAsync( databasePath ).ConfigureAwait( false );
 
                 if ( folder == null ) return;
 

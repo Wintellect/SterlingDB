@@ -72,7 +72,7 @@ namespace Wintellect.Sterling.Core.Database
 
         private async Task<IDisposable> LockAsync()
         {
-            return await _lock.LockAsync();
+            return await _lock.LockAsync().ConfigureAwait( false );
         }
 
         /// <summary>
@@ -443,9 +443,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="instance">The instance</param>
         public async Task<TKey> SaveAsync<T, TKey>( T instance ) where T : class, new()
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
-                return await _Save<TKey>( typeof ( T ), typeof ( T ), instance, new CycleCache() );
+                return await _Save<TKey>( typeof( T ), typeof( T ), instance, new CycleCache() ).ConfigureAwait( false );
             }
         }
 
@@ -458,9 +458,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <returns></returns>
         public async Task<TKey> SaveAsAsync<T, TKey>( T instance ) where T : class, new()
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
-                return await _Save<TKey>( instance.GetType(), typeof ( T ), instance, new CycleCache() );
+                return await _Save<TKey>( instance.GetType(), typeof( T ), instance, new CycleCache() ).ConfigureAwait( false );
             }
         }
 
@@ -513,9 +513,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <returns>The key</returns>
         public async Task<object> SaveAsync( Type actualType, Type tableType, object instance, CycleCache cache )
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
-                return await _Save<object>( actualType, tableType, instance, cache );
+                return await _Save<object>( actualType, tableType, instance, cache ).ConfigureAwait( false );
             }
         }
 
@@ -567,7 +567,7 @@ namespace Wintellect.Sterling.Core.Database
 
             cache.Add( tableType, instance, key );
 
-            keyIndex = await tableDef.Keys.AddKeyAsync( key );
+            keyIndex = await tableDef.Keys.AddKeyAsync( key ).ConfigureAwait( false );
 
             var memStream = new MemoryStream();
 
@@ -592,7 +592,7 @@ namespace Wintellect.Sterling.Core.Database
 
                     memStream.Seek( 0, SeekOrigin.Begin );
 
-                    await Driver.SaveAsync( tableType, keyIndex, memStream.ToArray() );
+                    await Driver.SaveAsync( tableType, keyIndex, memStream.ToArray() ).ConfigureAwait( false );
                 }
             }
             finally
@@ -604,7 +604,7 @@ namespace Wintellect.Sterling.Core.Database
             // update the indexes
             foreach ( var index in tableDef.Indexes.Values )
             {
-                await index.AddIndexAsync( instance, key );
+                await index.AddIndexAsync( instance, key ).ConfigureAwait( false );
             }
 
             // call post-save triggers
@@ -623,7 +623,7 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         public async Task FlushAsync()
         {
-            using( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
                 Interlocked.Increment( ref _taskCount );
 
@@ -631,11 +631,11 @@ namespace Wintellect.Sterling.Core.Database
                 {
                     foreach ( var def in TableDefinitions.Values )
                     {
-                        await def.Keys.FlushAsync();
+                        await def.Keys.FlushAsync().ConfigureAwait( false );
 
                         foreach ( var idx in def.Indexes.Values )
                         {
-                            await idx.FlushAsync();
+                            await idx.FlushAsync().ConfigureAwait( false );
                         }
                     }
 
@@ -668,9 +668,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <returns>The instance</returns>
         public async Task<T> LoadAsync<T>( object key ) where T : class, new()
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
-                return await _Load<T>( typeof ( T ), key, new CycleCache() );
+                return await _Load<T>( typeof( T ), key, new CycleCache() ).ConfigureAwait( false );
             }
         }
 
@@ -694,9 +694,9 @@ namespace Wintellect.Sterling.Core.Database
         /// <returns>The instance</returns>
         public async Task<object> LoadAsync( Type type, object key, CycleCache cache )
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
-                return await _Load<object>( type, key, cache );
+                return await _Load<object>( type, key, cache ).ConfigureAwait( false );
             }
         }
 
@@ -718,7 +718,7 @@ namespace Wintellect.Sterling.Core.Database
                     foreach ( var subDef in TableDefinitions.Where( pair => this.Database.Engine.PlatformAdapter.IsAssignableFrom( type, pair.Key ) )
                                                             .Select( pair => pair.Value ) )
                     {
-                        keyIndex = await subDef.Keys.GetIndexForKeyAsync( key );
+                        keyIndex = await subDef.Keys.GetIndexForKeyAsync( key ).ConfigureAwait( false );
 
                         if ( keyIndex < 0 ) continue;
 
@@ -734,7 +734,7 @@ namespace Wintellect.Sterling.Core.Database
                 }
                 else
                 {
-                    keyIndex = await tableDef.Keys.GetIndexForKeyAsync( key );
+                    keyIndex = await tableDef.Keys.GetIndexForKeyAsync( key ).ConfigureAwait( false );
                 }
 
                 if ( keyIndex < 0 )
@@ -754,7 +754,7 @@ namespace Wintellect.Sterling.Core.Database
 
                 try
                 {
-                    br = await Driver.LoadAsync( newType, keyIndex );
+                    br = await Driver.LoadAsync( newType, keyIndex ).ConfigureAwait( false );
 
                     if ( _byteInterceptorList.Count > 0 )
                     {
@@ -814,7 +814,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="key">The key</param>
         public async Task DeleteAsync(Type type, object key)
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
                 ITableDefinition tableDef = null;
 
@@ -831,15 +831,15 @@ namespace Wintellect.Sterling.Core.Database
                     throw new SterlingTriggerException( string.Format( Exceptions.Exceptions.BaseDatabaseInstance_Delete_Delete_failed_for_type, type ), trigger.GetType() );
                 }
 
-                var keyEntry = await tableDef.Keys.GetIndexForKeyAsync( key );
+                var keyEntry = await tableDef.Keys.GetIndexForKeyAsync( key ).ConfigureAwait( false );
 
-                await Driver.DeleteAsync( type, keyEntry );
+                await Driver.DeleteAsync( type, keyEntry ).ConfigureAwait( false );
 
-                await tableDef.Keys.RemoveKeyAsync( key );
+                await tableDef.Keys.RemoveKeyAsync( key ).ConfigureAwait( false );
 
                 foreach ( var index in tableDef.Indexes.Values )
                 {
-                    await index.RemoveIndexAsync( key );
+                    await index.RemoveIndexAsync( key ).ConfigureAwait( false );
                 }
 
                 _RaiseOperation( SterlingOperation.Delete, type, key );
@@ -852,7 +852,7 @@ namespace Wintellect.Sterling.Core.Database
         /// <param name="type">The type</param>
         public async Task TruncateAsync(Type type)
         {
-            using( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
                 if ( Interlocked.Read( ref _taskCount ) > 1 )
                 {
@@ -864,13 +864,13 @@ namespace Wintellect.Sterling.Core.Database
 
                 try
                 {
-                    await Driver.TruncateAsync( type );
+                    await Driver.TruncateAsync( type ).ConfigureAwait( false );
 
-                    await TableDefinitions[ type ].Keys.TruncateAsync();
+                    await TableDefinitions[ type ].Keys.TruncateAsync().ConfigureAwait( false );
 
                     foreach ( var index in TableDefinitions[ type ].Indexes.Values )
                     {
-                        await index.TruncateAsync();
+                        await index.TruncateAsync().ConfigureAwait( false );
                     }
 
                     _RaiseOperation( SterlingOperation.Truncate, type, null );
@@ -887,7 +887,7 @@ namespace Wintellect.Sterling.Core.Database
         /// </summary>
         public async Task PurgeAsync()
         {
-            using ( await LockAsync() )
+            using ( await LockAsync().ConfigureAwait( false ) )
             {
                 if ( Interlocked.Read( ref _taskCount ) > 1 )
                 {
@@ -899,16 +899,16 @@ namespace Wintellect.Sterling.Core.Database
 
                 try
                 {
-                    await Driver.PurgeAsync();
+                    await Driver.PurgeAsync().ConfigureAwait( false );
 
                     // clear key lists from memory
                     foreach ( var table in TableDefinitions.Keys )
                     {
-                        await TableDefinitions[ table ].Keys.TruncateAsync();
+                        await TableDefinitions[ table ].Keys.TruncateAsync().ConfigureAwait( false );
 
                         foreach ( var index in TableDefinitions[ table ].Indexes.Values )
                         {
-                            await index.TruncateAsync();
+                            await index.TruncateAsync().ConfigureAwait( false );
                         }
                     }
 
@@ -928,7 +928,7 @@ namespace Wintellect.Sterling.Core.Database
         {
             foreach ( var table in TableDefinitions )
             {
-                await table.Value.RefreshAsync();
+                await table.Value.RefreshAsync().ConfigureAwait( false );
             }
         }
 

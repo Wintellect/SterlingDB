@@ -43,7 +43,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="keyMap">Key map</param>
         public override async Task SerializeKeysAsync(Type type, Type keyType, IDictionary keyMap)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 _keyCache[ type ] = keyMap;
             }
@@ -58,7 +58,7 @@ namespace Wintellect.Sterling.Core
         /// <returns>The keys without the template</returns>
         public override async Task<IDictionary> DeserializeKeysAsync(Type type, Type keyType, IDictionary template)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 return _keyCache.ContainsKey( type ) ? _keyCache[ type ] as IDictionary : template;
             }
@@ -74,7 +74,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="indexMap">The index map</param>
         public override async Task SerializeIndexAsync<TKey, TIndex>(Type type, string indexName, Dictionary<TKey, TIndex> indexMap)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !_indexCache.ContainsKey( type ) )
                 {
@@ -98,7 +98,7 @@ namespace Wintellect.Sterling.Core
         /// <param name="indexMap">The index map</param>        
         public override async Task SerializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName, Dictionary<TKey, Tuple<TIndex1, TIndex2>> indexMap)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !_indexCache.ContainsKey( type ) )
                 {
@@ -121,7 +121,7 @@ namespace Wintellect.Sterling.Core
         /// <returns>The index map</returns>
         public override async Task<Dictionary<TKey, TIndex>> DeserializeIndexAsync<TKey, TIndex>(Type type, string indexName)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !_indexCache.ContainsKey( type ) )
                     return null;
@@ -146,7 +146,7 @@ namespace Wintellect.Sterling.Core
         /// <returns>The index map</returns>        
         public override async Task<Dictionary<TKey, Tuple<TIndex1, TIndex2>>> DeserializeIndexAsync<TKey, TIndex1, TIndex2>(Type type, string indexName)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !_indexCache.ContainsKey( type ) )
                     return null;
@@ -187,7 +187,7 @@ namespace Wintellect.Sterling.Core
         {
             var key = Tuple.Create( type.FullName, keyIndex );
 
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 _objectCache[ key ] = bytes;
             }
@@ -204,7 +204,7 @@ namespace Wintellect.Sterling.Core
             var key = Tuple.Create( type.FullName, keyIndex );
             byte[] bytes;
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 bytes = _objectCache[ key ];
             }
@@ -222,7 +222,7 @@ namespace Wintellect.Sterling.Core
         {
             var key = Tuple.Create( type.FullName, keyIndex );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( _objectCache.ContainsKey( key ) )
                 {
@@ -239,7 +239,7 @@ namespace Wintellect.Sterling.Core
         {
             var typeString = type.FullName;
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 var keys = from key in _objectCache.Keys where key.Item1.Equals( typeString ) select key;
 
@@ -271,7 +271,7 @@ namespace Wintellect.Sterling.Core
 
             foreach ( var type in types.ToList() )
             {
-                await TruncateAsync( type );
+                await TruncateAsync( type ).ConfigureAwait( false );
             }
         }
     }

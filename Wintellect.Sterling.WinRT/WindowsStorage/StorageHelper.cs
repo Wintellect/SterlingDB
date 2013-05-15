@@ -19,19 +19,19 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             switch ( location )
             {
                 case StorageStrategies.Roaming:
-                    return await FileExistsAsync( path, ApplicationData.Current.RoamingFolder );
+                    return await FileExistsAsync( path, ApplicationData.Current.RoamingFolder ).ConfigureAwait( false );
 
                 case StorageStrategies.Temporary:
-                    return await FileExistsAsync( path, ApplicationData.Current.TemporaryFolder );
+                    return await FileExistsAsync( path, ApplicationData.Current.TemporaryFolder ).ConfigureAwait( false );
 
                 default:
-                    return await FileExistsAsync( path, ApplicationData.Current.LocalFolder );
+                    return await FileExistsAsync( path, ApplicationData.Current.LocalFolder ).ConfigureAwait( false );
             }
         }
 
         public static async Task<bool> FileExistsAsync( string path, StorageFolder folder )
         {
-            return ( await GetIfFileExistsAsync( path, folder ) ) != null;
+            return ( await GetIfFileExistsAsync( path, folder ).ConfigureAwait( false ) ) != null;
         }
 
         public static async Task<StorageFolder> EnsureFolderExistsAsync( string path, StorageStrategies location = StorageStrategies.Local )
@@ -39,13 +39,13 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             switch ( location )
             {
                 case StorageStrategies.Roaming:
-                    return await EnsureFolderExistsAsync( path, ApplicationData.Current.RoamingFolder );
+                    return await EnsureFolderExistsAsync( path, ApplicationData.Current.RoamingFolder ).ConfigureAwait( false );
 
                 case StorageStrategies.Temporary:
-                    return await EnsureFolderExistsAsync( path, ApplicationData.Current.TemporaryFolder );
+                    return await EnsureFolderExistsAsync( path, ApplicationData.Current.TemporaryFolder ).ConfigureAwait( false );
 
                 default:
-                    return await EnsureFolderExistsAsync( path, ApplicationData.Current.LocalFolder );
+                    return await EnsureFolderExistsAsync( path, ApplicationData.Current.LocalFolder ).ConfigureAwait( false );
             }
         }
 
@@ -55,7 +55,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             foreach ( var name in path.Trim( '/' ).Split( '/' ) )
             {
-                parent = await _EnsureFolderExistsAsync( name, parent );
+                parent = await _EnsureFolderExistsAsync( name, parent ).ConfigureAwait( false );
             }
 
             return parent;  // now points to innermost folder
@@ -63,7 +63,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
         private static async Task<StorageFolder> _EnsureFolderExistsAsync( string name, StorageFolder parent )
         {
-            return await parent.CreateFolderAsync( name, CreationCollisionOption.OpenIfExists );
+            return await parent.CreateFolderAsync( name, CreationCollisionOption.OpenIfExists ).AsTask().ConfigureAwait( false );
         }
 
         public static async Task<bool> DeleteFileAsync( string path, StorageStrategies location = StorageStrategies.Local )
@@ -73,22 +73,22 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             switch ( location )
             {
                 case StorageStrategies.Roaming:
-                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.RoamingFolder );
+                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.RoamingFolder ).ConfigureAwait( false );
                     break;
 
                 case StorageStrategies.Temporary:
-                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.TemporaryFolder );
+                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.TemporaryFolder ).ConfigureAwait( false );
                     break;
 
                 default:
-                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.LocalFolder );
+                    file = await GetIfFileExistsAsync( path, ApplicationData.Current.LocalFolder ).ConfigureAwait( false );
                     break;
             }
             
             if ( file != null )
                 await file.DeleteAsync();
 
-            return !( await FileExistsAsync( path, location ) );
+            return !( await FileExistsAsync( path, location ).ConfigureAwait( false ) );
         }
 
         public static async Task<StorageFolder> GetFolderAsync( string path, StorageStrategies location = StorageStrategies.Local )
@@ -96,13 +96,13 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             switch ( location )
             {
                 case StorageStrategies.Roaming:
-                    return await GetFolderAsync( path, ApplicationData.Current.RoamingFolder );
+                    return await GetFolderAsync( path, ApplicationData.Current.RoamingFolder ).ConfigureAwait( false );
 
                 case StorageStrategies.Temporary:
-                    return await GetFolderAsync( path, ApplicationData.Current.TemporaryFolder );
+                    return await GetFolderAsync( path, ApplicationData.Current.TemporaryFolder ).ConfigureAwait( false );
 
                 default:
-                    return await GetFolderAsync( path, ApplicationData.Current.LocalFolder );
+                    return await GetFolderAsync( path, ApplicationData.Current.LocalFolder ).ConfigureAwait( false );
             }
         }
 
@@ -112,7 +112,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             foreach ( var name in path.Trim( '/' ).Split( '/' ) )
             {
-                parent = await _GetFolderAsync( name, parent );
+                parent = await _GetFolderAsync( name, parent ).ConfigureAwait( false );
 
                 if ( parent == null ) return null;
             }
@@ -124,7 +124,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
         {
             try
             {
-                return await parent.GetFolderAsync( name );
+                return await parent.GetFolderAsync( name ).AsTask().ConfigureAwait( false );
             }
             catch ( FileNotFoundException )
             {
@@ -137,21 +137,21 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             switch ( location )
             {
                 case StorageStrategies.Roaming:
-                    return await GetReaderForFileAsync( path, ApplicationData.Current.RoamingFolder );
+                    return await GetReaderForFileAsync( path, ApplicationData.Current.RoamingFolder ).ConfigureAwait( false );
 
                 case StorageStrategies.Temporary:
-                    return await GetReaderForFileAsync( path, ApplicationData.Current.TemporaryFolder );
+                    return await GetReaderForFileAsync( path, ApplicationData.Current.TemporaryFolder ).ConfigureAwait( false );
 
                 default:
-                    return await GetReaderForFileAsync( path, ApplicationData.Current.LocalFolder );
+                    return await GetReaderForFileAsync( path, ApplicationData.Current.LocalFolder ).ConfigureAwait( false );
             }
         }
 
         public static async Task<BinaryReader> GetReaderForFileAsync( string path, StorageFolder folder )
         {
-            var file = await CreateFileAsync( path, folder );
+            var file = await CreateFileAsync( path, folder ).ConfigureAwait( false );
 
-            var stream = await file.OpenStreamForReadAsync();
+            var stream = await file.OpenStreamForReadAsync().ConfigureAwait( false );
 
             return new BinaryReader( stream );
         }
@@ -161,21 +161,21 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
             switch ( location )
             {
                 case StorageStrategies.Roaming:
-                    return await GetWriterForFileAsync( path, ApplicationData.Current.RoamingFolder );
+                    return await GetWriterForFileAsync( path, ApplicationData.Current.RoamingFolder ).ConfigureAwait( false );
 
                 case StorageStrategies.Temporary:
-                    return await GetWriterForFileAsync( path, ApplicationData.Current.TemporaryFolder );
+                    return await GetWriterForFileAsync( path, ApplicationData.Current.TemporaryFolder ).ConfigureAwait( false );
 
                 default:
-                    return await GetWriterForFileAsync( path, ApplicationData.Current.LocalFolder );
+                    return await GetWriterForFileAsync( path, ApplicationData.Current.LocalFolder ).ConfigureAwait( false );
             }
         }
 
         public static async Task<BinaryWriter> GetWriterForFileAsync( string path, StorageFolder folder )
         {
-            var file = await CreateFileAsync( path, folder );
+            var file = await CreateFileAsync( path, folder ).ConfigureAwait( false );
 
-            var stream = await file.OpenStreamForWriteAsync();
+            var stream = await file.OpenStreamForWriteAsync().ConfigureAwait( false );
 
             return new BinaryWriter( stream );
         }
@@ -188,10 +188,10 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             if ( parts.Length > 1 )
             {
-                folder = await EnsureFolderExistsAsync( path.Substring( 0, path.Length - fileName.Length ), folder );
+                folder = await EnsureFolderExistsAsync( path.Substring( 0, path.Length - fileName.Length ), folder ).ConfigureAwait( false );
             }
 
-            return await folder.CreateFileAsync( fileName, option );
+            return await folder.CreateFileAsync( fileName, option ).AsTask().ConfigureAwait( false );
         }
 
         private static async Task<StorageFile> GetIfFileExistsAsync( string path, StorageFolder folder )
@@ -202,7 +202,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             if ( parts.Length > 1 )
             {
-                folder = await GetFolderAsync( path.Substring( 0, path.Length - fileName.Length ), folder );
+                folder = await GetFolderAsync( path.Substring( 0, path.Length - fileName.Length ), folder ).ConfigureAwait( false );
             }
 
             if ( folder == null )
@@ -212,7 +212,7 @@ namespace Wintellect.Sterling.WinRT.WindowsStorage
 
             try
             {
-                return await folder.GetFileAsync( fileName );
+                return await folder.GetFileAsync( fileName ).AsTask().ConfigureAwait( false );
             }
             catch ( FileNotFoundException )
             {

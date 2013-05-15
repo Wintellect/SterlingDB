@@ -54,7 +54,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             _iso.EnsureDirectory( _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this ) );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 var keyPath = _pathProvider.GetKeysPath( _basePath, DatabaseInstanceName, type, this );
 
@@ -86,7 +86,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
 
             if ( _iso.FileExists( keyPath ) )
             {
-                using ( await _lock.LockAsync() )
+                using ( await _lock.LockAsync().ConfigureAwait( false ) )
                 {
                     using ( var keyFile = _iso.GetReader( keyPath ) )
                     {
@@ -114,7 +114,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 using ( var indexFile = _iso.GetWriter( indexPath ) )
                 {
@@ -142,7 +142,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             var indexPath = _pathProvider.GetIndexPath( _basePath, DatabaseInstanceName, type, this, indexName );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 using ( var indexFile = _iso.GetWriter( indexPath ) )
                 {
@@ -174,7 +174,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             
             if ( _iso.FileExists( indexPath ) )
             {
-                using ( await _lock.LockAsync() )
+                using ( await _lock.LockAsync().ConfigureAwait( false ) )
                 {
                     using ( var indexFile = _iso.GetReader( indexPath ) )
                     {
@@ -210,7 +210,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             
             if ( _iso.FileExists( indexPath ) )
             {
-                using ( await _lock.LockAsync() )
+                using ( await _lock.LockAsync().ConfigureAwait( false ) )
                 {
                     using ( var indexFile = _iso.GetReader( indexPath ) )
                     {
@@ -257,11 +257,11 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
                         throw new SterlingTableNotFoundException(fullTypeName, DatabaseInstanceName);
                     }
 
-                    await GetTypeIndexAsync(tableType.AssemblyQualifiedName);
+                    await GetTypeIndexAsync( tableType.AssemblyQualifiedName ).ConfigureAwait( false );
                 }
             }
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 foreach (var type in tables.Keys)
                 {
@@ -276,7 +276,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// </summary>
         public override async Task SerializeTypesAsync()
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 var typePath = _pathProvider.GetTypesPath( _basePath, DatabaseInstanceName, this );
             
@@ -299,7 +299,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// <returns>The type</returns>
         public override async Task<int> GetTypeIndexAsync(string type)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !TypeIndex.Contains( type ) )
                 {
@@ -335,7 +335,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
             
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             using ( var instanceFile = _iso.GetWriter( instancePath ) )
             {
                 instanceFile.Write( bytes );
@@ -345,7 +345,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
 
             _dirtyType = false;
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }   
             
         /// <summary>
@@ -358,7 +358,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 return _iso.FileExists( instancePath ) ? _iso.GetReader( instancePath ) : new BinaryReader( new MemoryStream() );
             }
@@ -373,7 +373,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             var instancePath = _pathProvider.GetInstancePath( _basePath, DatabaseInstanceName, type, this, keyIndex );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( _iso.FileExists( instancePath ) )
                 {
@@ -390,7 +390,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         {
             var folderPath = _pathProvider.GetTablePath( _basePath, DatabaseInstanceName, type, this );
 
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 _iso.Purge( folderPath );
             }
@@ -401,7 +401,7 @@ namespace Wintellect.Sterling.WP8.IsolatedStorage
         /// </summary>
         public override async Task PurgeAsync()
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 _iso.Purge( _pathProvider.GetDatabasePath( _basePath, DatabaseInstanceName, this ) );
             }

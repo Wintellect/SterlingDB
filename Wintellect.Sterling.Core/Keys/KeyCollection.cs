@@ -54,7 +54,7 @@ namespace Wintellect.Sterling.Core.Keys
             _keyList.Clear();
             _keyMap.Clear();
 
-            var keyMap = await _driver.DeserializeKeysAsync( typeof ( T ), typeof ( TKey ), new Dictionary<TKey, int>() );
+            var keyMap = await _driver.DeserializeKeysAsync( typeof( T ), typeof( TKey ), new Dictionary<TKey, int>() ).ConfigureAwait( false );
 
             if ( keyMap == null )
             {
@@ -88,7 +88,7 @@ namespace Wintellect.Sterling.Core.Keys
         /// </summary>
         private async Task _SerializeKeysAsync()
         {
-            await _driver.SerializeKeysAsync( typeof ( T ), typeof ( TKey ), _keyMap );
+            await _driver.SerializeKeysAsync( typeof( T ), typeof( TKey ), _keyMap ).ConfigureAwait( false );
         }
 
         /// <summary>
@@ -101,11 +101,11 @@ namespace Wintellect.Sterling.Core.Keys
         /// </summary>
         public async Task FlushAsync()
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( IsDirty )
                 {
-                    await _SerializeKeysAsync();
+                    await _SerializeKeysAsync().ConfigureAwait( false );
                 }
 
                 IsDirty = false;
@@ -119,7 +119,7 @@ namespace Wintellect.Sterling.Core.Keys
         /// <returns>The index</returns>
         public async Task<int> GetIndexForKeyAsync(object key)
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 int result;
 
@@ -137,14 +137,14 @@ namespace Wintellect.Sterling.Core.Keys
         /// </summary>
         public async Task RefreshAsync()
         {
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( IsDirty )
                 {
-                    await _SerializeKeysAsync();
+                    await _SerializeKeysAsync().ConfigureAwait( false );
                 }
 
-                await _DeserializeKeysAsync();
+                await _DeserializeKeysAsync().ConfigureAwait( false );
 
                 IsDirty = false;
             }
@@ -156,8 +156,8 @@ namespace Wintellect.Sterling.Core.Keys
         public async Task TruncateAsync()
         {
             IsDirty = false;
-            
-            await RefreshAsync();
+
+            await RefreshAsync().ConfigureAwait( false );
         }       
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace Wintellect.Sterling.Core.Keys
         /// <param name="key">The key</param>
         public async Task<int> AddKeyAsync(object key)
         {
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 var newKey = new TableKey<T, TKey>( (TKey) key, _resolver );
 
@@ -192,7 +192,7 @@ namespace Wintellect.Sterling.Core.Keys
         /// <param name="key">The key</param>
         public async Task RemoveKeyAsync(object key)
         {
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 var checkKey = new TableKey<T, TKey>( (TKey) key, _resolver );
 

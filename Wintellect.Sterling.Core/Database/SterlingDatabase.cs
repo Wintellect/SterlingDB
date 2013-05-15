@@ -65,12 +65,12 @@ namespace Wintellect.Sterling.Core.Database
             
             var database = databaseQuery.First();
 
-            await database.FlushAsync();
+            await database.FlushAsync().ConfigureAwait( false );
 
             // first write the version
             _serializer.Serialize( _databaseVersion, writer );
 
-            var typeMaster = await database.Driver.GetTypesAsync();
+            var typeMaster = await database.Driver.GetTypesAsync().ConfigureAwait( false );
 
             // now the type master
             writer.Write( typeMaster.Count );
@@ -84,7 +84,7 @@ namespace Wintellect.Sterling.Core.Database
             foreach ( var table in ( (BaseDatabaseInstance) database ).TableDefinitions )
             {
                 // get the key list
-                var keys = await database.Driver.DeserializeKeysAsync( table.Key, table.Value.KeyType, table.Value.GetNewDictionary() );
+                var keys = await database.Driver.DeserializeKeysAsync( table.Key, table.Value.KeyType, table.Value.GetNewDictionary() ).ConfigureAwait( false );
 
                 // reality check
                 if ( keys == null )
@@ -103,7 +103,7 @@ namespace Wintellect.Sterling.Core.Database
                         writer.Write( (int) keys[ key ] );
 
                         // get the instance 
-                        using ( var instance = await database.Driver.LoadAsync( table.Key, (int) keys[ key ] ) )
+                        using ( var instance = await database.Driver.LoadAsync( table.Key, (int) keys[ key ] ).ConfigureAwait( false ) )
                         {
                             var bytes = instance.ReadBytes( (int) instance.BaseStream.Length );
                             writer.Write( bytes.Length );
@@ -132,7 +132,7 @@ namespace Wintellect.Sterling.Core.Database
             
             var database = databaseQuery.First();
 
-            await database.PurgeAsync();
+            await database.PurgeAsync().ConfigureAwait( false );
 
             // read the version
             var version = _serializer.Deserialize<Guid>( reader );
@@ -151,7 +151,7 @@ namespace Wintellect.Sterling.Core.Database
                 typeMaster.Add( reader.ReadString() );
             }
 
-            await database.Driver.DeserializeTypesAsync( typeMaster );
+            await database.Driver.DeserializeTypesAsync( typeMaster ).ConfigureAwait( false );
 
             foreach ( var table in ( (BaseDatabaseInstance) database ).TableDefinitions )
             {
@@ -173,14 +173,14 @@ namespace Wintellect.Sterling.Core.Database
 
                     var size = reader.ReadInt32();
                     var bytes = reader.ReadBytes( size );
-                    
-                    await database.Driver.SaveAsync( table.Key, keyIndex, bytes );
+
+                    await database.Driver.SaveAsync( table.Key, keyIndex, bytes ).ConfigureAwait( false );
                 }
 
-                await database.Driver.SerializeKeysAsync( table.Key, table.Value.KeyType, keyDictionary );
+                await database.Driver.SerializeKeysAsync( table.Key, table.Value.KeyType, keyDictionary ).ConfigureAwait( false );
 
                 // now refresh the table
-                await table.Value.RefreshAsync();
+                await table.Value.RefreshAsync().ConfigureAwait( false );
 
                 // now generate the indexes 
                 if ( table.Value.Indexes.Count <= 0 ) continue;
@@ -189,17 +189,17 @@ namespace Wintellect.Sterling.Core.Database
 
                 foreach ( var key in keyDictionary.Keys )
                 {
-                    var instance = await database.LoadAsync( table1.Key, key );
+                    var instance = await database.LoadAsync( table1.Key, key ).ConfigureAwait( false );
 
                     foreach ( var index in table.Value.Indexes )
                     {
-                        await index.Value.AddIndexAsync( instance, key );
+                        await index.Value.AddIndexAsync( instance, key ).ConfigureAwait( false );
                     }
                 }
 
                 foreach ( var index in table.Value.Indexes )
                 {
-                    await index.Value.FlushAsync();
+                    await index.Value.FlushAsync().ConfigureAwait( false );
                 }
             }
         }

@@ -74,7 +74,7 @@ namespace Wintellect.Sterling.Core.Indexes
         {
             IndexList.Clear();
 
-            var result = await Driver.DeserializeIndexAsync<TKey, TIndex>( typeof( T ), Name );
+            var result = await Driver.DeserializeIndexAsync<TKey, TIndex>( typeof( T ), Name ).ConfigureAwait( false );
 
             foreach ( var index in result ?? new Dictionary<TKey, TIndex>() )
             {
@@ -89,7 +89,7 @@ namespace Wintellect.Sterling.Core.Indexes
         {
             var dictionary = IndexList.ToDictionary( item => item.Key, item => item.Index );
 
-            await Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
+            await Driver.SerializeIndexAsync( typeof( T ), Name, dictionary ).ConfigureAwait( false );
         }
         
         /// <summary>
@@ -97,11 +97,11 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         public async Task FlushAsync()
         {
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( IsDirty )
                 {
-                    await SerializeIndexesAsync();
+                    await SerializeIndexesAsync().ConfigureAwait( false );
                 }
 
                 IsDirty = false;
@@ -113,14 +113,14 @@ namespace Wintellect.Sterling.Core.Indexes
         /// </summary>
         public async Task RefreshAsync()
         {
-            using ( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( IsDirty )
                 {
-                    await SerializeIndexesAsync();
+                    await SerializeIndexesAsync().ConfigureAwait( false );
                 }
 
-                await DeserializeIndexesAsync();
+                await DeserializeIndexesAsync().ConfigureAwait( false );
 
                 IsDirty = false;
             }
@@ -132,8 +132,8 @@ namespace Wintellect.Sterling.Core.Indexes
         public async Task TruncateAsync()
         {
             IsDirty = false;
-            
-            await RefreshAsync();
+
+            await RefreshAsync().ConfigureAwait( false );
         }
       
         /// <summary>
@@ -145,7 +145,7 @@ namespace Wintellect.Sterling.Core.Indexes
         {
             var newIndex = new TableIndex<T, TIndex, TKey>( _indexer( (T) instance ), (TKey) key, Resolver );
 
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !IndexList.Contains( newIndex ) )
                 {
@@ -188,7 +188,7 @@ namespace Wintellect.Sterling.Core.Indexes
 
             if ( index == null ) return;
 
-            using( await _lock.LockAsync() )
+            using ( await _lock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !IndexList.Contains( index ) ) return;
 

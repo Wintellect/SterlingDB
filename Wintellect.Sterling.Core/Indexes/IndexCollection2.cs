@@ -32,7 +32,7 @@ namespace Wintellect.Sterling.Core.Indexes
         {
             IndexList.Clear();
 
-            var indexes = await Driver.DeserializeIndexAsync<TKey, TIndex1, TIndex2>( typeof( T ), Name );
+            var indexes = await Driver.DeserializeIndexAsync<TKey, TIndex1, TIndex2>( typeof( T ), Name ).ConfigureAwait( false );
 
             foreach ( var index in indexes ?? new Dictionary<TKey, Tuple<TIndex1, TIndex2>>() )
             {
@@ -47,7 +47,7 @@ namespace Wintellect.Sterling.Core.Indexes
         {
             var dictionary = IndexList.ToDictionary( item => item.Key, item => Tuple.Create( item.Index.Item1, item.Index.Item2 ) );
 
-            await Driver.SerializeIndexAsync( typeof( T ), Name, dictionary );
+            await Driver.SerializeIndexAsync( typeof( T ), Name, dictionary ).ConfigureAwait( false );
         }
         
 
@@ -61,8 +61,8 @@ namespace Wintellect.Sterling.Core.Indexes
         {
             var newIndex = new TableIndex<T, TIndex1, TIndex2, TKey>( (TIndex1) index1, (TIndex2) index2, (TKey) key,
                                                                      Resolver );
-            
-            await AddIndexAsync( newIndex, key );
+
+            await AddIndexAsync( newIndex, key ).ConfigureAwait( false );
         }
     }
 }

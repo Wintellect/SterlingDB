@@ -67,7 +67,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
                 var operation = TableOperation.InsertOrReplace( entity );
 
-                await Task<TableResult>.Factory.FromAsync( table.BeginExecute, table.EndExecute, operation, null );
+                await Task<TableResult>.Factory.FromAsync( table.BeginExecute, table.EndExecute, operation, null ).ConfigureAwait( false );
             }
         }
 
@@ -77,11 +77,11 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                                 ? Task<bool>.Factory.FromAsync( table.BeginExists, table.EndExists, null )
                                 : Task.FromResult( true );
 
-            if ( await awaitable )
+            if ( await awaitable.ConfigureAwait( false ) )
             {
                 var operation = TableOperation.Retrieve<DynamicTableEntity>( partitionKey, rowKey );
 
-                var result = await Task<TableResult>.Factory.FromAsync( table.BeginExecute, table.EndExecute, operation, null );
+                var result = await Task<TableResult>.Factory.FromAsync( table.BeginExecute, table.EndExecute, operation, null ).ConfigureAwait( false );
 
                 Contract.Assert( result != null );
 
@@ -120,7 +120,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryWriter> action = writer =>
                 {
@@ -134,19 +134,19 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _keysTable.Value.CreateIfNotExistsAsync();
+                await _keysTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Store( _keysTable.Value, action, type.FullName, keyType.FullName );
+                await Store( _keysTable.Value, action, type.FullName, keyType.FullName ).ConfigureAwait( false );
             }
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }
 
         public override async Task<IDictionary> DeserializeKeysAsync( Type type, Type keyType, IDictionary dictionary )
         {
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryReader> action = reader =>
                 {
@@ -158,9 +158,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _keysTable.Value.CreateIfNotExistsAsync();
+                await _keysTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Read( _keysTable.Value, action, type.FullName, keyType.FullName );
+                await Read( _keysTable.Value, action, type.FullName, keyType.FullName ).ConfigureAwait( false );
 
                 return dictionary;
             }
@@ -170,7 +170,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryWriter> action = writer =>
                 {
@@ -183,9 +183,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _indexesTable.Value.CreateIfNotExistsAsync();
+                await _indexesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Store( _indexesTable.Value, action, type.FullName, indexName );
+                await Store( _indexesTable.Value, action, type.FullName, indexName ).ConfigureAwait( false );
             }
         }
 
@@ -193,7 +193,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryWriter> action = writer =>
                 {
@@ -207,9 +207,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _indexesTable.Value.CreateIfNotExistsAsync();
+                await _indexesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Store( _indexesTable.Value, action, type.FullName, indexName );
+                await Store( _indexesTable.Value, action, type.FullName, indexName ).ConfigureAwait( false );
             }
         }
 
@@ -219,7 +219,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryReader> action = reader =>
                 {
@@ -232,9 +232,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _indexesTable.Value.CreateIfNotExistsAsync();
+                await _indexesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Read( _indexesTable.Value, action, type.FullName, indexName );
+                await Read( _indexesTable.Value, action, type.FullName, indexName ).ConfigureAwait( false );
 
                 return dictionary;
             }
@@ -246,7 +246,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
             var pathLock = Lock.GetLock( type.FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryReader> action = reader =>
                 {
@@ -260,9 +260,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _indexesTable.Value.CreateIfNotExistsAsync();
+                await _indexesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Read( _indexesTable.Value, action, type.FullName, indexName );
+                await Read( _indexesTable.Value, action, type.FullName, indexName ).ConfigureAwait( false );
 
                 return dictionary;
             }
@@ -290,7 +290,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                         throw new SterlingTableNotFoundException( fullTypeName, DatabaseInstanceName );
                     }
 
-                    await GetTypeIndexAsync( tableType.AssemblyQualifiedName );
+                    await GetTypeIndexAsync( tableType.AssemblyQualifiedName ).ConfigureAwait( false );
                 }
             };
 
@@ -303,7 +303,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( TypeIndex.GetType().FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryWriter> action = writer =>
                 {
@@ -315,9 +315,9 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
                     }
                 };
 
-                await _typesTable.Value.CreateIfNotExistsAsync();
+                await _typesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Store( _typesTable.Value, action, "___Types", "___Types" );
+                await Store( _typesTable.Value, action, "___Types", "___Types" ).ConfigureAwait( false );
             }
         }
 
@@ -325,7 +325,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( TypeIndex.GetType().FullName );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 if ( !TypeIndex.Contains( type ) )
                 {
@@ -346,35 +346,35 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( string.Format( "{0}-{1}", type.FullName, keyIndex ) );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 Action<BinaryWriter> action = writer => writer.Write( bytes );
 
-                await _typesTable.Value.CreateIfNotExistsAsync();
+                await _typesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Store( _typesTable.Value, action, type.FullName, keyIndex.ToString() );
+                await Store( _typesTable.Value, action, type.FullName, keyIndex.ToString() ).ConfigureAwait( false );
             }
 
             if ( !_dirtyType ) return;
 
             _dirtyType = false;
 
-            await SerializeTypesAsync();
+            await SerializeTypesAsync().ConfigureAwait( false );
         }
 
         public override async Task<BinaryReader> LoadAsync( Type type, int keyIndex )
         {
             var pathLock = Lock.GetLock( string.Format( "{0}-{1}", type.FullName, keyIndex ) );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 byte[] bytes = null;
 
                 Action<byte[]> action = bytesArg => bytes = bytesArg;
 
-                await _typesTable.Value.CreateIfNotExistsAsync();
+                await _typesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await ReadBytes( _typesTable.Value, action, type.FullName, keyIndex.ToString() );
+                await ReadBytes( _typesTable.Value, action, type.FullName, keyIndex.ToString() ).ConfigureAwait( false );
 
                 Contract.Assert( bytes != null );
 
@@ -386,13 +386,13 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
         {
             var pathLock = Lock.GetLock( string.Format( "{0}-{1}", type.FullName, keyIndex ) );
 
-            using ( await pathLock.LockAsync() )
+            using ( await pathLock.LockAsync().ConfigureAwait( false ) )
             {
                 var operation = TableOperation.Delete( new DynamicTableEntity( type.FullName, keyIndex.ToString() ) { ETag = "*" } );
 
-                await _typesTable.Value.CreateIfNotExistsAsync();
+                await _typesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                await Task<TableResult>.Factory.FromAsync( _typesTable.Value.BeginExecute, _typesTable.Value.EndExecute, operation, null );
+                await Task<TableResult>.Factory.FromAsync( _typesTable.Value.BeginExecute, _typesTable.Value.EndExecute, operation, null ).ConfigureAwait( false );
             }
         }
 
@@ -402,7 +402,7 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
             var query = new TableQuery<DynamicTableEntity>().Where( queryText );
 
-            var records = await _typesTable.Value.ExecuteQueryAsync( query );
+            var records = await _typesTable.Value.ExecuteQueryAsync( query ).ConfigureAwait( false );
 
             foreach ( var record in records )
             {
@@ -410,31 +410,31 @@ namespace Wintellect.Sterling.Server.Azure.TableStorage
 
                 var pathLock = Lock.GetLock( string.Format( "{0}-{1}", type.FullName, rowKey ) );
 
-                using ( await pathLock.LockAsync() )
+                using ( await pathLock.LockAsync().ConfigureAwait( false ) )
                 {
                     var operation = TableOperation.Delete( new DynamicTableEntity( type.FullName, rowKey ) { ETag = "*" } );
 
-                    await _typesTable.Value.CreateIfNotExistsAsync();
+                    await _typesTable.Value.CreateIfNotExistsAsync().ConfigureAwait( false );
 
-                    await Task<TableResult>.Factory.FromAsync( _typesTable.Value.BeginExecute, _typesTable.Value.EndExecute, operation, null );
+                    await Task<TableResult>.Factory.FromAsync( _typesTable.Value.BeginExecute, _typesTable.Value.EndExecute, operation, null ).ConfigureAwait( false );
                 }
             }
         }
 
         public override async Task PurgeAsync()
         {
-            await PurgeAsync( _keysTable );
-            await PurgeAsync( _indexesTable );
-            await PurgeAsync( _typesTable );
+            await PurgeAsync( _keysTable ).ConfigureAwait( false );
+            await PurgeAsync( _indexesTable ).ConfigureAwait( false );
+            await PurgeAsync( _typesTable ).ConfigureAwait( false );
         }
 
         private async Task PurgeAsync( Lazy<CloudTable> table )
         {
             if ( table.IsValueCreated )
             {
-                if ( await Task<bool>.Factory.FromAsync( table.Value.BeginExists, table.Value.EndExists, null ) )
+                if ( await Task<bool>.Factory.FromAsync( table.Value.BeginExists, table.Value.EndExists, null ).ConfigureAwait( false ) )
                 {
-                    await Task.Factory.FromAsync( table.Value.BeginDelete, table.Value.EndDelete, null );
+                    await Task.Factory.FromAsync( table.Value.BeginDelete, table.Value.EndDelete, null ).ConfigureAwait( false );
                 }
             }
         }
