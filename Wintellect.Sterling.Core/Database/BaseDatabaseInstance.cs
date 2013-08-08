@@ -558,12 +558,7 @@ namespace Wintellect.Sterling.Core.Database
             if ( cache.Check( instance ) )
             {
                 return key;
-            }
-
-            if ( cache.Check( instance ) )
-            {
-                return key;
-            }
+            } 
 
             cache.Add( tableType, instance, key );
 
